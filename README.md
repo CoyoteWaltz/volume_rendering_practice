@@ -44,16 +44,35 @@ Use C++ with OpenGL & GLSL as programming language
 
 
 
-
 ## TODO
 
-* [ ] http://sci.utah.edu/~will/papers/vrnt/vr-neuron-tracing.pdf(downloaded)
-* [ ] https://www.willusher.io/
 * [ ] https://alex.vlachos.com/graphics/Alex_Vlachos_Advanced_VR_Rendering_Performance_GDC2016.pdf
 * [ ] https://www.youtube.com/watch?v=ya8vKZRBXdw
 * [ ] OpenGL GLSL
 * [ ] github: volume rendering glsl
 * [ ] Data source?
+
+### Paper reading
+
+#### Local Ambient Occlusion in Direct Volume Rendering
+
+TODO
+
+#### REAL-TIME VOLUME RENDERING INTERACTION IN VIRTUAL REALITY
+
+TODO
+
+#### A Virtual Reality Visualization Tool for Neuron Tracing
+
+* [x] http://sci.utah.edu/~will/papers/vrnt/vr-neuron-tracing.pdf(downloaded)
+
+Author: https://www.willusher.io/
+
+Reading draft locates in [notes](https://github.com/CoyoteWaltz/MarkdownNotes/blob/master/02learning_notes/computer_graphics/paper_reading.md)
+
+
+
+
 
 
 
@@ -67,7 +86,7 @@ Use C++ with OpenGL & GLSL as programming language
 
 #### Learning materials
 
-- Keep learning a course from [Games101](https://www.bilibili.com/video/BV1X7411F744) and take some [notes](https://github.com/CoyoteWaltz/Markdown/tree/master/02learning_notes/computer_graphics)
+- Keep learning a course from [Games101](https://www.bilibili.com/video/BV1X7411F744) and take some [notes](https://github.com/CoyoteWaltz/MarkdownNotes/tree/master/02learning_notes/computer_graphics)
 - Books?
 
 
@@ -155,6 +174,8 @@ Once that 3D data set is captured, rendering a 2D projection of it is next. Howe
 Volume rendering allows users to visualize three-dimensional scalar fields. This is important for any industry that produces 3D data sets for analysis, including physics, *medicine*, disaster preparedness, and more.
 
 Volume rendering is important to understand the data from CAT, MRI scanners, complex fluid dynamics, data from seismic events, and other volumetric data for which geometric surfaces are unavailable or just too difficult or cost-prohibitive to generate.
+
+
 
 #### Common Volume Rendering Techniques
 
