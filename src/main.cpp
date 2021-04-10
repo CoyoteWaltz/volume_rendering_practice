@@ -214,17 +214,28 @@ int main(int argc, char **argv)
     // 如果有其他属性 那么在 attrib point 的时候就要 计算其他步长之类的计算
     float vertices[] = {
         // 如果要画一个长方形
-        // 第一个三角形的三个坐标 右下三角
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.5f, 0.5f, 0.0f,
-        // 第二个 左上三角
-        0.5f, 0.5f, 0.0f,   // 右上角重复的点
-        -0.5f, -0.5f, 0.0f, // 左下角重复的点
-        -0.5f, 0.5f, 0.0f   // 左上角
+        // // 第一个三角形的三个坐标 右下三角
+        // -0.5f, -0.5f, 0.0f,
+        // 0.5f, -0.5f, 0.0f,
+        // 0.5f, 0.5f, 0.0f,
+        // // 第二个 左上三角
+        // // 0.5f, 0.5f, 0.0f,   // 右上角重复的点
+        // // -0.5f, -0.5f, 0.0f, // 左下角重复的点
+        // -0.5f, 0.5f, 0.0f // 左上角
+        0.5f, 0.5f, 0.0f,   // top right
+        0.5f, -0.5f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f, // bottom left
+        -0.5f, 0.5f, 0.0f   // top left
     };
+    // index of a triangle
+    unsigned int indices[] = {
+        // 0, 1, 2, // 组成右下三角形
+        // 2, 3, 0  // 左上三角形
+        0, 1, 3, // first Triangle
+        1, 2, 3  // second Triangle
+    };           // 必须是 unsigned
 
-    unsigned int buffer, VAO;
+    unsigned int buffer, VAO, IBO; // index buffer or EBO element buffer
     glGenVertexArrays(1, &VAO);
 
     glGenBuffers(1, &buffer); // 生成 1 个 buffer 给他个 point
@@ -232,7 +243,11 @@ int main(int argc, char **argv)
     // 选择这个 buffer 就是 binding 操作 指明类型
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     // 接着给他 一点数据 和大小 usage GL_STATIC_DRAW 修改一次数据用好多次_画画用
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // opengl 还不知道数据是如何 layout
     // index: index of the attribs, size: 每个 attrib 的数据大小 4 default,
@@ -257,7 +272,6 @@ int main(int argc, char **argv)
 
     while (!glfwWindowShouldClose(window))
     {
-        // std::cout << "<<" << std::endl;
         handle_input(window);
 
         // rendering something
@@ -272,8 +286,9 @@ int main(int argc, char **argv)
         // glUseProgram(shader);
         // glBindVertexArray(VAO);
         // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        // glDrawElements(GL_TRIANGLES, 3, NULL, )
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
