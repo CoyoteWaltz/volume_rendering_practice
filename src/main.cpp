@@ -2,10 +2,34 @@
  * new opengl toturial demo
 */
 #include "include/libs.h"
+#include "include/macros.h"
 
 // 非得这么写 declaration
 void window_resize_callback(GLFWwindow *window, const int width, const int height);
 void padding_viewport(const int width, const int height, const int padding);
+
+static void gl_clear_error()
+{
+    // glGetError 返回每一个 错误码 需要进行 loop 获取到每一个错误
+    while (glGetError() != GL_NO_ERROR)
+    {
+        // do nothing just clear
+    }
+}
+
+static bool gl_log_call(const char *function, const char *file, int line)
+{
+    while (GLenum error = glGetError())
+    {
+        std::cout << "[ERROR::CODE] >>> " << error
+                  << " | " << function
+                  << " | " << file
+                  << " : " << line
+                  << std::endl;
+        return false;
+    }
+    return true;
+}
 
 void window_resize_callback(GLFWwindow *window, const int width, const int height)
 {
@@ -270,6 +294,8 @@ int main(int argc, char **argv)
 
     // glDrawArrays(GL_TRIANGLES, 0, 3);
 
+    // Wireframe mode
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     while (!glfwWindowShouldClose(window))
     {
         handle_input(window);
@@ -288,11 +314,20 @@ int main(int argc, char **argv)
         // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         // glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
+        // gl_clear_error();                              // 清除下面方法之外的所有 error
+        // glDrawElements(GL_TRIANGLES, 6, GL_INT, NULL); // 这种错误 只会得到个 黑屏 GL_INVALID_ENUM
+        // // gl_check_error();
+        // ASSERT(gl_log_call());
+
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, NULL));
+
+        // 为什么 unsigned
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    // glDebugMessageCallback()
 
     // close GL context and any other GLFW resources
     glDeleteVertexArrays(1, &VAO);

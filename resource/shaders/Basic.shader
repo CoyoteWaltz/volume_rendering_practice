@@ -14,5 +14,5 @@ out vec4 c;
 
 void main()
 {
-    c = vec4(0.2f, 0.53f, 0.2f, 1.0f);
+    c = vec4(0.33f, 0.213f, 0.12f, 1.0f);
 }
