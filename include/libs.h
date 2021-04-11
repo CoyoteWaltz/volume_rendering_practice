@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream> // string stream
 #include <fstream>
+#include <vector>
 
 // #include <glm/vec3.hpp>                  // glm::vec3
 // #include <glm/vec4.hpp>                  // glm::vec4
@@ -17,7 +18,11 @@
 // #include <glm/ext/scalar_constants.hpp>  // glm::pi
 // #include <glm/gtc/type_ptr.hpp>
 
-// custom class
+// custom class 注意这些 header 本身不要 include libs.h 会有依赖混乱
 #include "renderer.h"
+#include "vertex_buffer.h"
+#include "index_buffer.h"
+#include "vertex_buffer_layout.h"
+#include "vertex_array.h"
 
 #endif

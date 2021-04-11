@@ -2,7 +2,6 @@
  * new opengl toturial demo
 */
 #include "include/libs.h"
-#include "include/macros.h"
 
 // 非得这么写 declaration
 void window_resize_callback(GLFWwindow *window, const int width, const int height);
@@ -240,110 +239,127 @@ int main(int argc, char **argv)
         1, 2, 3  // second Triangle
     };           // 必须是 unsigned
 
-    unsigned int buffer, VAO, IBO; // index buffer or EBO element buffer
-    glGenVertexArrays(1, &VAO);
-
-    glGenBuffers(1, &buffer); // 生成 1 个 buffer 给他个 point
-    glBindVertexArray(VAO);
-    // 选择这个 buffer 就是 binding 操作 指明类型
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    // 接着给他 一点数据 和大小 usage GL_STATIC_DRAW 修改一次数据用好多次_画画用
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // opengl 还不知道数据是如何 layout
-    // index: index of the attribs, size: 每个 attrib 的数据大小 4 default,
-    // type: 数据类型, normalized: 是否需要被标准化到 0 1,
-    // stride: the amount of bytes between each vertex
-    // pointer: offset of the first component of the first generic vertex attribute(byte)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    // 注意这里的 attrib index 也会被用在 vertex shader 中 对应的 shader 会取得对应的 attrib 做相应的计算
-    // 这一行又 link 了 vao
-
-    // enable!!
-    glEnableVertexAttribArray(0);
-
-    ShaderProgramSource source = parse_shader("../resource/shaders/Basic.shader");
-    // std::cout << "vertex_shader_source>>>\n"
-    //           << source.vertex_shader_source << '\n'
-    //           << "fragment_shader_source>>>\n"
-    //           << source.fragment_shader_source << std::endl;
-    glBindVertexArray(VAO); // program link 之前一定要绑定 vao!!!!!
-    unsigned int shader = create_shader(source.vertex_shader_source, source.fragment_shader_source);
-    GLCALL(glUseProgram(shader));
-
-    float r = 0.224;
-    float g = 0.612;
-    float b = 0.940;
-    float a = 1.0;
-    float increment = 0.05;
-    // location of the uniform variable according to the name in shader
-    GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
-    ASSERT(location != -1); // 没找到 就是 -1 但不会影响整个代码 shader 不编译
-    // 设定值
-    GLCALL(glUniform4f(location, r, g, b, a));
-
-    // glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    // Wireframe mode
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    // GLCALL(glUseProgram(0)); // 如果所有的 bind 操作给的是 0 就是 unbind。。。
-    // 需要在 loop 中 重新 bind
-    // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
-
-    while (!glfwWindowShouldClose(window))
     {
-        handle_input(window);
 
-        // rendering something
-        // glClearColor(0.3f, 0.4f, 0.1f, 1.f);
-        // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        GLCALL(glUniform4f(location, r, g, b, a));
-        if (r > 1.0f)
-        {
-            increment = -0.02f;
-        }
-        else if (r < 0)
-        {
-            increment = 0.02f;
-        }
-        r += increment;
-        // g += 0.001;
-        // b += 0.001;
+        // unsigned int buffer;
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        // unsigned int VAO;
 
-        // drawing
-        // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
-        // gl 其实知道 context
-        // glUseProgram(shader);
+        // unsigned int IBO; // index buffer or EBO element buffer
+        // glGenVertexArrays(1, &VAO);
+
+        // glGenBuffers(1, &buffer); // 生成 1 个 buffer 给他个 point
         // glBindVertexArray(VAO);
-        // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        // 选择这个 buffer 就是 binding 操作 指明类型
+        // glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        // 接着给他 一点数据 和大小 usage GL_STATIC_DRAW 修改一次数据用好多次_画画用
+        // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        // glGenBuffers(1, &IBO);
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        // opengl 还不知道数据是如何 layout
+        // index: index of the attribs, size: 每个 attrib 的数据大小 4 default,
+        // type: 数据类型, normalized: 是否需要被标准化到 0 1,
+        // stride: the amount of bytes between each vertex
+        // pointer: offset of the first component of the first generic vertex attribute(byte)
+        // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+        // 注意这里的 attrib index 也会被用在 vertex shader 中 对应的 shader 会取得对应的 attrib 做相应的计算
+        // 这一行又 link 了 vao
+
+        // enable!!
+        // glEnableVertexAttribArray(0);
+        VertexBuffer vb(vertices, 4 * 3 * sizeof(float));
+        IndexBuffer ib(indices, 6);
+        VertexArray va;
+        VertexBufferLayout layout;
+        layout.push<float>(3); // layout 3D xyz => 3
+        va.add_buffer(vb, layout);
+
+        ShaderProgramSource source = parse_shader("../resource/shaders/Basic.shader");
+        // std::cout << "vertex_shader_source>>>\n"
+        //           << source.vertex_shader_source << '\n'
+        //           << "fragment_shader_source>>>\n"
+        //           << source.fragment_shader_source << std::endl;
+        // glBindVertexArray(VAO); // program link 之前一定要绑定 vao!!!!!
+        unsigned int shader = create_shader(source.vertex_shader_source, source.fragment_shader_source);
+        GLCALL(glUseProgram(shader));
+
+        float r = 0.224;
+        float g = 0.612;
+        float b = 0.940;
+        float a = 1.0;
+        float increment = 0.05;
+        // location of the uniform variable according to the name in shader
+        GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
+        ASSERT(location != -1); // 没找到 就是 -1 但不会影响整个代码 shader 不编译
+        // 设定值
+        GLCALL(glUniform4f(location, r, g, b, a));
+
         // glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
-        // gl_clear_error();                              // 清除下面方法之外的所有 error
-        // glDrawElements(GL_TRIANGLES, 6, GL_INT, NULL); // 这种错误 只会得到个 黑屏 GL_INVALID_ENUM
-        // // gl_check_error();
-        // ASSERT(gl_log_call());
+        // Wireframe mode
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
+        // GLCALL(glUseProgram(0)); // 如果所有的 bind 操作给的是 0 就是 unbind。。。
+        // 需要在 loop 中 重新 bind
+        // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
+        ib.bind(); // need bind
 
-        // 为什么 unsigned
+        while (!glfwWindowShouldClose(window))
+        {
+            handle_input(window);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+            // rendering something
+            // glClearColor(0.3f, 0.4f, 0.1f, 1.f);
+            // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            GLCALL(glUniform4f(location, r, g, b, a));
+            if (r > 1.0f)
+            {
+                increment = -0.02f;
+            }
+            else if (r < 0)
+            {
+                increment = 0.02f;
+            }
+            r += increment;
+            // g += 0.001;
+            // b += 0.001;
+
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            // drawing
+            // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
+            // gl 其实知道 context
+            // glUseProgram(shader);
+            // glBindVertexArray(VAO);
+            // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+            // glDrawArrays(GL_TRIANGLES, 0, 3);
+
+            // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
+            // gl_clear_error();                              // 清除下面方法之外的所有 error
+            // glDrawElements(GL_TRIANGLES, 6, GL_INT, NULL); // 这种错误 只会得到个 黑屏 GL_INVALID_ENUM
+            // // gl_check_error();
+            // ASSERT(gl_log_call());
+
+            va.bind();
+            ib.bind();
+            GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
+
+            // 为什么 unsigned
+
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
+        // glDebugMessageCallback()
+
+        // close GL context and any other GLFW resources
+        // glDeleteVertexArrays(1, &VAO);
+        // glDeleteBuffers(1, &buffer);
+        glDeleteProgram(shader);
     }
-    // glDebugMessageCallback()
 
-    // close GL context and any other GLFW resources
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &buffer);
-    glDeleteProgram(shader);
     glfwTerminate();
     return 0;
 }

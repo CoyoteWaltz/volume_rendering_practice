@@ -1,5 +1,4 @@
 #include "renderer.h"
-#include <iostream>
 
 void gl_clear_error()
 {
@@ -7,6 +6,9 @@ void gl_clear_error()
     while (glGetError() != GL_NO_ERROR)
     {
         // do nothing just clear
+        // 但问题是 如果 glfwTerminate call 了 析构的时候没有 OpenGL context
+        // 这里会一直报错 一个 死循环
+        // 用 new 去构造 或者 给一个新的 scope
     }
 }
 
@@ -16,8 +18,8 @@ bool gl_log_call(const char *function, const char *file, int line)
     {
         std::cout << "[ERROR::CODE] >>> " << error
                   << " | " << function
-                  << " | " << file
-                  << " : " << line
+                  << " in " << file
+                  << ":" << line
                   << std::endl;
         return false;
     }
