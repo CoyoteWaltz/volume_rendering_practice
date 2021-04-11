@@ -12,6 +12,10 @@ find_package(GLFW3 REQUIRED)
 
 # GLEW
 find_package(GLEW REQUIRED)
+if (GLEW_FOUND)
+    link_libraries(${GLEW_LIBRARIES})
+    include_directories(${GLEW_INCLUDE_DIRS})
+endif()
 
 # GLM
 find_package(GLM REQUIRED)
@@ -31,6 +35,9 @@ target_include_directories(renderer
     # 如果是 INTERFACE myLib 本身不会 include 路径 就找不到 hpp 文件了会报错
         ${STATIC_DIR}
 )
+
+# 自己的 lib 也需要 link
+target_link_libraries(renderer GLEW::GLEW)
 
 add_executable(${PROJECT_NAME} 
     ${PROJECT_SOURCE_DIR}/src/main.cpp
