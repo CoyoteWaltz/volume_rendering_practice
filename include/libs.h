@@ -17,4 +17,7 @@
 // #include <glm/ext/scalar_constants.hpp>  // glm::pi
 // #include <glm/gtc/type_ptr.hpp>
 
+// custom class
+#include "renderer.h"
+
 #endif

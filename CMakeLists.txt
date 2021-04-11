@@ -19,20 +19,23 @@ if(GLM_FOUND)
     message(STATUS ">>>>GLM found")
 endif(GLM_FOUND)
 
+set(STATIC_DIR include/)
+
+add_library(renderer STATIC src/renderer.cpp ${STATIC_DIR}/renderer.h)
+
 # Put all libraries into a variable
-set(LIBS glfw GLEW::GLEW)
+set(LIBS glfw GLEW::GLEW renderer)
 
-# set(STATIC_DIR include/)
-
-# add_library(libs
-#     src/triangle.cpp
-# )
+target_include_directories(renderer
+    PUBLIC
+    # 如果是 INTERFACE myLib 本身不会 include 路径 就找不到 hpp 文件了会报错
+        ${STATIC_DIR}
+)
 
 add_executable(${PROJECT_NAME} 
     ${PROJECT_SOURCE_DIR}/src/main.cpp
 )
 
-# add_library(myLib STATIC src/std_suggestion.cpp ${STATIC_DIR}/std_suggestion.hpp)
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE

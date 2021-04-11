@@ -8,29 +8,6 @@
 void window_resize_callback(GLFWwindow *window, const int width, const int height);
 void padding_viewport(const int width, const int height, const int padding);
 
-static void gl_clear_error()
-{
-    // glGetError 返回每一个 错误码 需要进行 loop 获取到每一个错误
-    while (glGetError() != GL_NO_ERROR)
-    {
-        // do nothing just clear
-    }
-}
-
-static bool gl_log_call(const char *function, const char *file, int line)
-{
-    while (GLenum error = glGetError())
-    {
-        std::cout << "[ERROR::CODE] >>> " << error
-                  << " | " << function
-                  << " | " << file
-                  << " : " << line
-                  << std::endl;
-        return false;
-    }
-    return true;
-}
-
 void window_resize_callback(GLFWwindow *window, const int width, const int height)
 {
     std::cout << "resizeing!" << std::endl;
@@ -105,13 +82,11 @@ ShaderProgramSource parse_shader(const std::string &file)
 // unsigned int => GLenum 还是用 cpp type 比较通用
 static int compile_shader(unsigned int type, const std::string &source)
 {
+    // GLCALL(unsigned int id = glCreateShader(type));
     unsigned int id = glCreateShader(type);
     const char *src = source.c_str();  // &source[0]
     glShaderSource(id, 1, &src, NULL); // 如果 length 是 NULL 会取到字符串的末尾
     glCompileShader(id);
-    // std::cout << "......src \n"
-    //           << src << std::endl;
-
     // error handling
     // iv? int vector(array) so 有两个类型的 result
     int success;
@@ -203,7 +178,7 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 开启 core profile
 
     const unsigned int width = 640;
     const unsigned int height = 480;
@@ -219,9 +194,15 @@ int main(int argc, char **argv)
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, window_resize_callback);
 
-    // padding_viewport(width, height);
+    // swap 的频率 vsync
+    // the number of screen updates to wait from the time
+    // glfwSwapBuffers was called before swapping the buffers and returning.
+    // This is sometimes called vertical synchronization,
+    // vertical retrace synchronization or just vsync.
+    // 翻译一下
+    glfwSwapInterval(1);
 
-    // glViewport(100, 100, width - 100, height - 100);
+    // padding_viewport(width, height);
     glViewport(0, 0, width, height);
 
     // start GLEW extension handler
@@ -280,6 +261,8 @@ int main(int argc, char **argv)
     // pointer: offset of the first component of the first generic vertex attribute(byte)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     // 注意这里的 attrib index 也会被用在 vertex shader 中 对应的 shader 会取得对应的 attrib 做相应的计算
+    // 这一行又 link 了 vao
+
     // enable!!
     glEnableVertexAttribArray(0);
 
@@ -290,12 +273,28 @@ int main(int argc, char **argv)
     //           << source.fragment_shader_source << std::endl;
     glBindVertexArray(VAO); // program link 之前一定要绑定 vao!!!!!
     unsigned int shader = create_shader(source.vertex_shader_source, source.fragment_shader_source);
-    glUseProgram(shader);
+    GLCALL(glUseProgram(shader));
+
+    float r = 0.224;
+    float g = 0.612;
+    float b = 0.940;
+    float a = 1.0;
+    float increment = 0.05;
+    // location of the uniform variable according to the name in shader
+    GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
+    ASSERT(location != -1); // 没找到 就是 -1 但不会影响整个代码 shader 不编译
+    // 设定值
+    GLCALL(glUniform4f(location, r, g, b, a));
 
     // glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // Wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // GLCALL(glUseProgram(0)); // 如果所有的 bind 操作给的是 0 就是 unbind。。。
+    // 需要在 loop 中 重新 bind
+    // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
+
     while (!glfwWindowShouldClose(window))
     {
         handle_input(window);
@@ -303,6 +302,18 @@ int main(int argc, char **argv)
         // rendering something
         // glClearColor(0.3f, 0.4f, 0.1f, 1.f);
         // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        GLCALL(glUniform4f(location, r, g, b, a));
+        if (r > 1.0f)
+        {
+            increment = -0.02f;
+        }
+        else if (r < 0)
+        {
+            increment = 0.02f;
+        }
+        r += increment;
+        // g += 0.001;
+        // b += 0.001;
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -320,7 +331,7 @@ int main(int argc, char **argv)
         // // gl_check_error();
         // ASSERT(gl_log_call());
 
-        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, NULL));
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
 
         // 为什么 unsigned
 
