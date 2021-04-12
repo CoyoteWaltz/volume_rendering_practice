@@ -175,6 +175,8 @@ int main(int argc, char **argv)
         vb.unbind();
         shader.unbind();
 
+        Renderer renderer;
+
         while (!glfwWindowShouldClose(window))
         {
             handle_input(window);
@@ -214,10 +216,11 @@ int main(int argc, char **argv)
             // // gl_check_error();
             // ASSERT(gl_log_call());
 
-            va.bind();
-            vb.bind();
-            ib.bind();
-            GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
+            renderer.draw(va, ib, shader);
+            // va.bind();
+            // vb.bind();
+            // ib.bind();
+            // GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
 
             // 为什么 unsigned
 
