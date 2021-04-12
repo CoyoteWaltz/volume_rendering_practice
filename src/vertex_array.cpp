@@ -28,17 +28,17 @@ void VertexArray::add_buffer(const VertexBuffer &vb, const VertexBufferLayout &l
     vb.bind();
     // setup layouts
     const auto &elements = layout.get_elements();
-    unsigned int offset = 0;
+    unsigned int offset = 0; // 从 0 开始 按照 stride 取 attribute 数据
     for (unsigned int i = 0; i < elements.size(); ++i)
     {
         const auto &element = elements[i];
         GLCALL(glEnableVertexAttribArray(i));
         GLCALL(glVertexAttribPointer(
-            i,
-            element.count,
-            element.type,
+            i,             // location attribute 的 index
+            element.count, // 数据个数
+            element.type,  // 数据类型
             element.normalized,
-            layout.get_stride(),
+            layout.get_stride(), // 每次取的 byte 间隔
             (const void *)offset));
         offset += element.count * VertexBufferElement::get_size_of_type(element.type);
     }

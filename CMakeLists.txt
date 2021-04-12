@@ -34,6 +34,8 @@ add_library(index_buffer STATIC src/index_buffer.cpp ${STATIC_DIR}/index_buffer.
 add_library(vertex_array STATIC src/vertex_array.cpp ${STATIC_DIR}/vertex_array.h)
 # vertex_buffer_layout lib
 add_library(vertex_buffer_layout STATIC src/vertex_buffer_layout.cpp ${STATIC_DIR}/vertex_buffer_layout.h)
+# shader lib
+add_library(shader STATIC src/shader.cpp ${STATIC_DIR}/shader.h)
 
 # Put all libraries into a variable
 set(LIBS
@@ -44,6 +46,7 @@ set(LIBS
     index_buffer
     vertex_array
     vertex_buffer_layout
+    shader
 )
 # renderer
 target_include_directories(renderer
@@ -71,6 +74,11 @@ target_include_directories(vertex_buffer_layout
     PUBLIC
         ${STATIC_DIR}
 )
+# shader
+target_include_directories(shader
+    PUBLIC
+        ${STATIC_DIR}
+)
 
 # 自己的 lib 也需要 link
 target_link_libraries(renderer GLEW::GLEW)
@@ -78,6 +86,7 @@ target_link_libraries(vertex_buffer renderer)
 target_link_libraries(index_buffer renderer)
 target_link_libraries(vertex_array renderer)
 target_link_libraries(vertex_buffer_layout renderer)
+target_link_libraries(shader renderer)
 
 add_executable(${PROJECT_NAME} 
     ${PROJECT_SOURCE_DIR}/src/main.cpp

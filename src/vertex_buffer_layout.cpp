@@ -20,7 +20,6 @@ unsigned int VertexBufferElement::get_size_of_type(unsigned int type)
         ASSERT(false);
     }
     return size;
-    // return 0;
 }
 
 VertexBufferLayout::VertexBufferLayout()

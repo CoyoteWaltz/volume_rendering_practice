@@ -14,7 +14,9 @@ struct VertexBufferElement
 
 /**
  * 不同的 attribute 对应的位置 index
- * 
+ * 每个 attribute 对应的 维度不同: count
+ * 每个数据类型不同: template 决定
+ * vertex array 取的步长也不一样
  */
 class VertexBufferLayout
 {

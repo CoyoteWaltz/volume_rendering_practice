@@ -32,138 +32,6 @@ void handle_input(GLFWwindow *window)
     }
 }
 
-struct ShaderProgramSource
-{
-    std::string vertex_shader_source;
-    std::string fragment_shader_source;
-};
-
-ShaderProgramSource parse_shader(const std::string &file)
-{
-    enum class ShaderType
-    {
-        NONE = -1,
-        VERTEX = 0,
-        FRAGMENT = 1, // 用作数组 index
-    };
-    std::fstream stream(file);
-    // line by line
-    std::string line;
-
-    std::stringstream ss[2];
-
-    ShaderType type = ShaderType::NONE;
-    while (getline(stream, line))
-    {
-        if (line.find("#shader") != std::string::npos)
-        { // no position
-            if (line.find("vertex") != std::string::npos)
-            {
-                // set mode to vertex
-                type = ShaderType::VERTEX;
-            }
-            else if (line.find("fragment") != std::string::npos)
-            {
-                // set mode to fragment
-                type = ShaderType::FRAGMENT;
-            }
-        }
-        else
-        {
-            ss[int(type)] << line << '\n';
-        }
-    }
-    return {
-        ss[int(ShaderType::VERTEX)].str(),
-        ss[int(ShaderType::FRAGMENT)].str()};
-}
-
-// unsigned int => GLenum 还是用 cpp type 比较通用
-static int compile_shader(unsigned int type, const std::string &source)
-{
-    // GLCALL(unsigned int id = glCreateShader(type));
-    unsigned int id = glCreateShader(type);
-    const char *src = source.c_str();  // &source[0]
-    glShaderSource(id, 1, &src, NULL); // 如果 length 是 NULL 会取到字符串的末尾
-    glCompileShader(id);
-    // error handling
-    // iv? int vector(array) so 有两个类型的 result
-    int success;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &success);
-    std::string shader_type = type == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT";
-    if (success == GL_FALSE)
-    {
-        int length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char *log = (char *)alloca(length * sizeof(char)); // alloca 可以 动态的在 stack 上分配内存 cool
-        glGetShaderInfoLog(id, length, &length, log);      // 这个 size 为啥还需要个 pointer ...
-        std::cout << "[ERROR::COMPILE::SHADER "
-                  << shader_type
-                  << "] >>> "
-                  << log
-                  << " | length: "
-                  << length << std::endl;
-        glDeleteShader(id);
-        return 0;
-    }
-    else
-    {
-        std::cout << "SUCCESS compile " << shader_type << std::endl;
-    }
-
-    return id;
-}
-
-// 返回一个 shader id
-static int create_shader(const std::string &vertex_shader, const std::string &fragment_shader)
-{
-    // 好多的方法去读取 shader 代码
-    unsigned int program = glCreateProgram();
-    unsigned int vs = compile_shader(GL_VERTEX_SHADER, vertex_shader);
-    unsigned int fs = compile_shader(GL_FRAGMENT_SHADER, fragment_shader);
-
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program); // 告诉 opengl 我们的 program
-    int success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (success == GL_FALSE)
-    {
-        int length;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-        char *log = (char *)alloca(length * sizeof(char)); // alloca 可以 动态的在 stack 上分配内存 cool
-        glGetProgramInfoLog(program, length, NULL, log);
-        std::cout << "[ERROR::PROGRAM::LINK] >>> " << log
-                  << " | length: " << length << std::endl;
-    }
-    else
-    {
-        std::cout << "SUCCESS Link program" << std::endl;
-    }
-    glValidateProgram(program); // 结果存在 GL_VALIDATE_STATUS
-    glGetProgramiv(program, GL_VALIDATE_STATUS, &success);
-    if (success == GL_FALSE)
-    {
-        int length;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-        char *log = (char *)alloca(length * sizeof(char)); // alloca 可以 动态的在 stack 上分配内存 cool
-        glGetProgramInfoLog(program, length, NULL, log);
-        std::cout << "[ERROR::PROGRAM::VALIDATION] >>> " << log
-                  << " | length: " << length << std::endl;
-    }
-    else
-    {
-        std::cout << "SUCCESS Validate program" << std::endl;
-    }
-
-    // link shader 之后可以 del 了 但是这里是直接删掉 gpu 上的 shader
-    // 推荐的做法是 detach 后续会提到
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-
-    return program;
-}
-
 int main(int argc, char **argv)
 {
     // start GL context and O/S window using the GLFW helper library
@@ -240,7 +108,6 @@ int main(int argc, char **argv)
     };           // 必须是 unsigned
 
     {
-
         // unsigned int buffer;
 
         // unsigned int VAO;
@@ -277,25 +144,23 @@ int main(int argc, char **argv)
         layout.push<float>(3); // layout 3D xyz => 3
         va.add_buffer(vb, layout);
 
-        ShaderProgramSource source = parse_shader("../resource/shaders/Basic.shader");
-        // std::cout << "vertex_shader_source>>>\n"
-        //           << source.vertex_shader_source << '\n'
-        //           << "fragment_shader_source>>>\n"
-        //           << source.fragment_shader_source << std::endl;
-        // glBindVertexArray(VAO); // program link 之前一定要绑定 vao!!!!!
-        unsigned int shader = create_shader(source.vertex_shader_source, source.fragment_shader_source);
-        GLCALL(glUseProgram(shader));
+        // ShaderProgramSource source = parse_shader("../resource/shaders/Basic.shader");
+        // unsigned int shader = create_shader(source.vertex_shader_source, source.fragment_shader_source);
+        // GLCALL(glUseProgram(shader));
 
         float r = 0.224;
         float g = 0.612;
         float b = 0.940;
         float a = 1.0;
         float increment = 0.05;
+        Shader shader("../resource/shaders/Basic.shader");
+        shader.bind();
         // location of the uniform variable according to the name in shader
-        GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
-        ASSERT(location != -1); // 没找到 就是 -1 但不会影响整个代码 shader 不编译
+        // GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
+        // ASSERT(location != -1); // 没找到 就是 -1 但不会影响整个代码 shader 不编译
         // 设定值
-        GLCALL(glUniform4f(location, r, g, b, a));
+        // GLCALL(glUniform4f(location, r, g, b, a));
+        shader.set_unifroms4f("u_Color", r, g, b, a);
 
         // glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -305,7 +170,10 @@ int main(int argc, char **argv)
         // GLCALL(glUseProgram(0)); // 如果所有的 bind 操作给的是 0 就是 unbind。。。
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
-        ib.bind(); // need bind
+        ib.unbind();
+        va.unbind();
+        vb.unbind();
+        shader.unbind();
 
         while (!glfwWindowShouldClose(window))
         {
@@ -314,7 +182,10 @@ int main(int argc, char **argv)
             // rendering something
             // glClearColor(0.3f, 0.4f, 0.1f, 1.f);
             // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            GLCALL(glUniform4f(location, r, g, b, a));
+            // GLCALL(glUniform4f(location, r, g, b, a));
+            shader.bind();
+            shader.set_unifroms4f("u_Color", r, g, b, a);
+
             if (r > 1.0f)
             {
                 increment = -0.02f;
@@ -344,6 +215,7 @@ int main(int argc, char **argv)
             // ASSERT(gl_log_call());
 
             va.bind();
+            vb.bind();
             ib.bind();
             GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
 
@@ -357,7 +229,8 @@ int main(int argc, char **argv)
         // close GL context and any other GLFW resources
         // glDeleteVertexArrays(1, &VAO);
         // glDeleteBuffers(1, &buffer);
-        glDeleteProgram(shader);
+        // glDeleteProgram(shader);
+        shader.unbind();
     }
 
     glfwTerminate();
