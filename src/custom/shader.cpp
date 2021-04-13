@@ -1,4 +1,4 @@
-#include "shader.h"
+#include "custom/shader.h"
 
 Shader::Shader(const std::string &file_path)
     : file_path(file_path), renderer_id(0)
@@ -24,6 +24,16 @@ void Shader::unbind() const
 void Shader::set_unifroms4f(const std::string &name, float v0, float v1, float v2, float v3)
 {
     GLCALL(glUniform4f(get_uniform_location(name), v0, v1, v2, v3));
+}
+
+void Shader::set_unifroms1f(const std::string &name, float value)
+{
+    GLCALL(glUniform1f(get_uniform_location(name), value));
+}
+
+void Shader::set_unifroms1i(const std::string &name, int value)
+{
+    GLCALL(glUniform1i(get_uniform_location(name), value));
 }
 
 int Shader::get_uniform_location(const std::string &name)

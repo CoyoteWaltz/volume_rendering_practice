@@ -1,4 +1,4 @@
-#include "index_buffer.h"
+#include "custom/index_buffer.h"
 
 IndexBuffer::IndexBuffer(const unsigned int *data, unsigned int count)
     : count(count)

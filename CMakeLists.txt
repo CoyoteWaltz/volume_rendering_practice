@@ -25,17 +25,20 @@ endif(GLM_FOUND)
 
 set(STATIC_DIR include/)
 # renderer lib
-add_library(renderer STATIC src/renderer.cpp ${STATIC_DIR}/renderer.h)
+add_library(renderer STATIC src/custom/renderer.cpp ${STATIC_DIR}/custom/renderer.h)
 # vertex_buffer lib
-add_library(vertex_buffer STATIC src/vertex_buffer.cpp ${STATIC_DIR}/vertex_buffer.h)
+add_library(vertex_buffer STATIC src/custom/vertex_buffer.cpp ${STATIC_DIR}/custom/vertex_buffer.h)
 # index_buffer lib
-add_library(index_buffer STATIC src/index_buffer.cpp ${STATIC_DIR}/index_buffer.h)
+add_library(index_buffer STATIC src/custom/index_buffer.cpp ${STATIC_DIR}/custom/index_buffer.h)
 # vertex_array lib
-add_library(vertex_array STATIC src/vertex_array.cpp ${STATIC_DIR}/vertex_array.h)
+add_library(vertex_array STATIC src/custom/vertex_array.cpp ${STATIC_DIR}/custom/vertex_array.h)
 # vertex_buffer_layout lib
-add_library(vertex_buffer_layout STATIC src/vertex_buffer_layout.cpp ${STATIC_DIR}/vertex_buffer_layout.h)
+add_library(vertex_buffer_layout STATIC src/custom/vertex_buffer_layout.cpp ${STATIC_DIR}/custom/vertex_buffer_layout.h)
 # shader lib
-add_library(shader STATIC src/shader.cpp ${STATIC_DIR}/shader.h)
+add_library(shader STATIC src/custom/shader.cpp ${STATIC_DIR}/custom/shader.h)
+# texture lib
+add_library(texture STATIC src/custom/texture.cpp ${STATIC_DIR}/custom/texture.h)
+
 # utils lib
 add_library(utils STATIC src/utils.cpp ${STATIC_DIR}/utils.h)
 
@@ -49,6 +52,7 @@ set(LIBS
     vertex_array
     vertex_buffer_layout
     shader
+    texture
     utils
 )
 # renderer
@@ -82,6 +86,11 @@ target_include_directories(shader
     PUBLIC
         ${STATIC_DIR}
 )
+# texture
+target_include_directories(texture
+    PUBLIC
+        ${STATIC_DIR}
+)
 # utils
 target_include_directories(utils
     PUBLIC
@@ -96,6 +105,7 @@ target_link_libraries(index_buffer utils)
 target_link_libraries(vertex_array utils)
 target_link_libraries(vertex_buffer_layout utils)
 target_link_libraries(shader utils)
+target_link_libraries(texture utils)
 
 add_executable(${PROJECT_NAME} 
     ${PROJECT_SOURCE_DIR}/src/main.cpp

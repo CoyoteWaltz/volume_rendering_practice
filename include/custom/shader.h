@@ -33,6 +33,8 @@ public:
 
     // set unifroms
     void set_unifroms4f(const std::string &name, float v0, float v1, float v2, float v3);
+    void set_unifroms1f(const std::string &name, float value);
+    void set_unifroms1i(const std::string &name, int value);
 
     ShaderProgramSource parse_shader(const std::string &file_path);
     unsigned int compile_shader(unsigned int type, const std::string &source);

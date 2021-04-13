@@ -1,4 +1,4 @@
-#include "vertex_buffer_layout.h"
+#include "custom/vertex_buffer_layout.h"
 
 unsigned int VertexBufferElement::get_size_of_type(unsigned int type)
 {

@@ -69,6 +69,9 @@ int main(int argc, char **argv)
     // 翻译一下
     glfwSwapInterval(1);
 
+    const std::string textures_path = "../resource/textures/";
+    const std::string shaders_path = "../resource/shaders/";
+
     // padding_viewport(width, height);
     glViewport(0, 0, width, height);
 
@@ -94,10 +97,11 @@ int main(int argc, char **argv)
         // // 0.5f, 0.5f, 0.0f,   // 右上角重复的点
         // // -0.5f, -0.5f, 0.0f, // 左下角重复的点
         // -0.5f, 0.5f, 0.0f // 左上角
-        0.5f, 0.5f, 0.0f,   // top right
-        0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f, // bottom left
-        -0.5f, 0.5f, 0.0f   // top left
+        0.5f, 0.5f, 0.0f, 1.f, 1.f,   // top right
+        0.5f, -0.5f, 0.0f, 1.f, 0.f,  // bottom right
+        -0.5f, -0.5f, 0.0f, 0.f, 0.f, // bottom left
+        -0.5f, 0.5f, 0.0f, 0.f, 1.f,  // top left
+        // 给出 纹理坐标
     };
     // index of a triangle
     unsigned int indices[] = {
@@ -108,6 +112,11 @@ int main(int argc, char **argv)
     };           // 必须是 unsigned
 
     {
+        // gl 如何 blend 获取 GL_SRC_ALPHA 在这之上的 alpha' = 1 - alpha
+        GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+        GLCALL(glEnable(GL_BLEND));
+        // call deconstructor
+
         // unsigned int buffer;
 
         // unsigned int VAO;
@@ -137,11 +146,12 @@ int main(int argc, char **argv)
 
         // enable!!
         // glEnableVertexAttribArray(0);
-        VertexBuffer vb(vertices, 4 * 3 * sizeof(float));
+        VertexBuffer vb(vertices, 4 * 5 * sizeof(float));
         IndexBuffer ib(indices, 6);
         VertexArray va;
         VertexBufferLayout layout;
         layout.push<float>(3); // layout 3D xyz => 3
+        layout.push<float>(2); // layout 3D texture coord => 2
         va.add_buffer(vb, layout);
 
         // ShaderProgramSource source = parse_shader("../resource/shaders/Basic.shader");
@@ -153,7 +163,7 @@ int main(int argc, char **argv)
         float b = 0.940;
         float a = 1.0;
         float increment = 0.05;
-        Shader shader("../resource/shaders/Basic.shader");
+        Shader shader(shaders_path + "Basic.shader");
         shader.bind();
         // location of the uniform variable according to the name in shader
         // GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
@@ -161,6 +171,10 @@ int main(int argc, char **argv)
         // 设定值
         // GLCALL(glUniform4f(location, r, g, b, a));
         shader.set_unifroms4f("u_Color", r, g, b, a);
+
+        Texture texture(textures_path + "ttt.png");
+        texture.bind();                        // send a int uniform slot
+        shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
 
         // glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -177,6 +191,8 @@ int main(int argc, char **argv)
 
         Renderer renderer;
 
+        shader.bind();
+
         while (!glfwWindowShouldClose(window))
         {
             handle_input(window);
@@ -185,7 +201,6 @@ int main(int argc, char **argv)
             // glClearColor(0.3f, 0.4f, 0.1f, 1.f);
             // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             // GLCALL(glUniform4f(location, r, g, b, a));
-            shader.bind();
             shader.set_unifroms4f("u_Color", r, g, b, a);
 
             if (r > 1.0f)
@@ -200,7 +215,8 @@ int main(int argc, char **argv)
             // g += 0.001;
             // b += 0.001;
 
-            glClear(GL_COLOR_BUFFER_BIT);
+            // glClear(GL_COLOR_BUFFER_BIT);
+            renderer.clear();
 
             // drawing
             // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
@@ -217,13 +233,8 @@ int main(int argc, char **argv)
             // ASSERT(gl_log_call());
 
             renderer.draw(va, ib, shader);
-            // va.bind();
-            // vb.bind();
-            // ib.bind();
             // GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
-
             // 为什么 unsigned
-
             glfwSwapBuffers(window);
             glfwPollEvents();
         }

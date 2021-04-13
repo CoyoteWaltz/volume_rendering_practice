@@ -4,11 +4,6 @@
 #include <GL/glew.h>    // include GLEW and new version of GL on Windows
 #include <GLFW/glfw3.h> // GLFW helper library for window management
 // include glew before glfw because glfw needs some opengl headers in glew
-// #include <iostream> //for cout
-// #include <string>
-// #include <sstream> // string stream
-// #include <fstream>
-// #include <vector>
 
 // #include <glm/vec3.hpp>                  // glm::vec3
 // #include <glm/vec4.hpp>                  // glm::vec4
@@ -18,12 +13,16 @@
 // #include <glm/ext/scalar_constants.hpp>  // glm::pi
 // #include <glm/gtc/type_ptr.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "vender/stb_image.h"
+
 // custom class 注意这些 header 本身不要 include libs.h 会有依赖混乱
-#include "vertex_buffer.h"
-#include "index_buffer.h"
-#include "vertex_array.h"
-#include "shader.h"
-#include "vertex_buffer_layout.h"
-#include "renderer.h"
+#include "custom/vertex_buffer.h"
+#include "custom/index_buffer.h"
+#include "custom/vertex_array.h"
+#include "custom/shader.h"
+#include "custom/vertex_buffer_layout.h"
+#include "custom/renderer.h"
+#include "custom/texture.h"
 
 #endif
