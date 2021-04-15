@@ -113,7 +113,14 @@ int main(int argc, char **argv)
 
     {
         // gl 如何 blend 获取 GL_SRC_ALPHA 在这之上的 alpha' = 1 - alpha
-        GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+        // glBlendFunc: src -> dest 新的颜色 -> 目标的颜色 然后加在原始的颜色上
+        // 取 src 的 alpha 用 1 减去这个值 得到目标颜色的 alpha
+        // 最后求和
+        // GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+        GLCALL(glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA));
+        // glBlendFunc src 默认是 1 dest 默认是 0
+        // src 永远乘 1 不变 dest 直接乘 0 没用了 也就是丢弃 原来的 dest 用 src 去覆盖
+        // glBlendEquation(GL_ADD); // 默认的混合方式就是 add 将 src 加到 dest 上
         GLCALL(glEnable(GL_BLEND));
         // call deconstructor
 
@@ -163,6 +170,12 @@ int main(int argc, char **argv)
         float b = 0.940;
         float a = 1.0;
         float increment = 0.05;
+
+        // 来个投影矩阵 正交变换矩阵 6 个参数 left right bottom top narZ farZ 关于 viewport plane 的
+        // 给定这些参数 就能创建一个 正交矩阵 game101 C4 学过哦
+        glm::mat4 proj = glm::ortho(-3.f, 2.f, -1.5f, 1.5f, -3.f, 1.f);
+        std::cout << proj.length() << std::endl;
+
         Shader shader(shaders_path + "Basic.shader");
         shader.bind();
         // location of the uniform variable according to the name in shader
@@ -171,10 +184,12 @@ int main(int argc, char **argv)
         // 设定值
         // GLCALL(glUniform4f(location, r, g, b, a));
         shader.set_unifroms4f("u_Color", r, g, b, a);
+        // shader.
 
         Texture texture(textures_path + "ttt.png");
-        texture.bind();                        // send a int uniform slot
-        shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
+        texture.bind();                           // send a int uniform slot
+        shader.set_unifroms1i("u_Texture", 0);    // texture => slot 0
+        shader.set_unifroms_mat4f("u_MVP", proj); // texture => slot 0
 
         // glDrawArrays(GL_TRIANGLES, 0, 3);
 

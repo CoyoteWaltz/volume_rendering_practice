@@ -36,6 +36,12 @@ void Shader::set_unifroms1i(const std::string &name, int value)
     GLCALL(glUniform1i(get_uniform_location(name), value));
 }
 
+void Shader::set_unifroms_mat4f(const std::string &name, const glm::mat4 &mat)
+{
+    // 4x4 float no need to transfer data 给到一个数组的起点 pointer
+    GLCALL(glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat[0][0]));
+}
+
 int Shader::get_uniform_location(const std::string &name)
 {
     if (map_uniform_name_location.find(name) != map_uniform_name_location.end())

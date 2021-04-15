@@ -6,9 +6,11 @@ layout(location = 1) in vec2 texCoord; // 送去 frag  varing
 
 out vec2 v_texCoord;
 
+uniform mat4 u_MVP;
+
 void main()
 {
-    gl_Position = vec4(position.x, position.y, position.z, 1.0);
+    gl_Position = u_MVP * vec4(position.x, position.y, position.z, 1.0);
     v_texCoord = texCoord;
 }
 #shader fragment
@@ -25,5 +27,5 @@ void main()
     // c = vec4(0.33f, 0.213f, 0.12f, 1.0f);
     vec4 textColor = texture(u_Texture, v_texCoord);
     c = textColor - (u_Color * 0.66);
-    // c = u_Color;
+    // c = textColor;
 }
