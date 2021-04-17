@@ -47,8 +47,8 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 开启 core profile
 
-    const unsigned int width = 640;
-    const unsigned int height = 480;
+    const unsigned int width = 800;
+    const unsigned int height = 600;
 
     // Actually create the window
     GLFWwindow *window = glfwCreateWindow(width, height, "OpenGL window", NULL, NULL);
@@ -97,10 +97,14 @@ int main(int argc, char **argv)
         // // 0.5f, 0.5f, 0.0f,   // 右上角重复的点
         // // -0.5f, -0.5f, 0.0f, // 左下角重复的点
         // -0.5f, 0.5f, 0.0f // 左上角
-        0.5f, 0.5f, 0.0f, 1.f, 1.f,   // top right
-        0.5f, -0.5f, 0.0f, 1.f, 0.f,  // bottom right
-        -0.5f, -0.5f, 0.0f, 0.f, 0.f, // bottom left
-        -0.5f, 0.5f, 0.0f, 0.f, 1.f,  // top left
+        100.0f, 100.0f, 0.0f, 1.f, 1.f,   // top right
+        100.0f, -100.0f, 0.0f, 1.f, 0.f,  // bottom right
+        -100.0f, -100.0f, 0.0f, 0.f, 0.f, // bottom left
+        -100.0f, 100.0f, 0.0f, 0.f, 1.f,  // top left
+        // 100.0f, 100.0f, 0.0f, 1.f, 1.f,   // top right
+        // 100.0f, -100.0f, 0.0f, 1.f, 0.f,  // bottom right
+        // -100.0f, -100.0f, 0.0f, 0.f, 0.f, // bottom left
+        // -100.0f, 100.0f, 0.0f, 0.f, 1.f,  // top left
         // 给出 纹理坐标
     };
     // index of a triangle
@@ -173,10 +177,20 @@ int main(int argc, char **argv)
 
         // 来个投影矩阵 正交变换矩阵 6 个参数 left right bottom top narZ farZ 关于 viewport plane 的
         // 给定这些参数 就能创建一个 正交矩阵 game101 C4 学过哦
-        glm::mat4 proj = glm::ortho(-3.f, 2.f, -1.5f, 1.5f, -3.f, 1.f);
-        std::cout << proj.length() << std::endl;
+        glm::mat4 proj = glm::mat4(1.f);
+        glm::mat4 view = glm::mat4(1.f);
+        glm::mat4 model = glm::mat4(1.f);
+
+        proj = glm::ortho(-200.f, 200.f, -150.f, 150.f, -1.f, 1.f);
+        // view 矩阵 移动 camera 实际上是对物体做 reverse 的移动
+        // camera 向左 50 => 物体向右 50 对一个 I 做 translate 变换
+        // view = glm::translate(glm::mat4(1.f), glm::vec3(50.f, 0.f, 0.f));
+        // model = glm::translate(glm::mat4(1.f), glm::vec3(-80.f, 20.f, 0.f));
+        // glm::mat4 model = glm::rotate(glm::mat4(1.f), 0.22f, glm::vec3(1, 1, 0));
+        glm::mat4 mvp = proj * view * model;
 
         Shader shader(shaders_path + "Basic.shader");
+        // Shader shader(shaders_path + "RayTrace.shader");
         shader.bind();
         // location of the uniform variable according to the name in shader
         // GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
@@ -187,9 +201,9 @@ int main(int argc, char **argv)
         // shader.
 
         Texture texture(textures_path + "ttt.png");
-        texture.bind();                           // send a int uniform slot
-        shader.set_unifroms1i("u_Texture", 0);    // texture => slot 0
-        shader.set_unifroms_mat4f("u_MVP", proj); // texture => slot 0
+        texture.bind();                        // send a int uniform slot
+        shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
+        shader.set_unifroms_mat4f("u_MVP", mvp);
 
         // glDrawArrays(GL_TRIANGLES, 0, 3);
 

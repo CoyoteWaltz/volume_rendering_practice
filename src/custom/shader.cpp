@@ -39,6 +39,7 @@ void Shader::set_unifroms1i(const std::string &name, int value)
 void Shader::set_unifroms_mat4f(const std::string &name, const glm::mat4 &mat)
 {
     // 4x4 float no need to transfer data 给到一个数组的起点 pointer
+    // glm 的 mat 数据格式符合 opengl 的标准
     GLCALL(glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat[0][0]));
 }
 
