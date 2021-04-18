@@ -145,22 +145,25 @@ int main(int argc, char **argv)
 
         // Texture texture(textures_path + "ttt.png");
         // texture.bind();                        // send a int uniform slot
+        Texture envTexture(textures_path + "envmap6.jpg");
+        envTexture.bind(1);                        // send a int uniform slot
+        shader.set_unifroms1i("u_envMap", 1); // texture => slot 0
         // shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
         // shader.set_unifroms_mat4f("u_MVP", mvp);
         shader.set_unifroms2f("screenSize", width, height);
-        shader.set_unifroms3f("camera.left_lower_corner", -2.f, -1.f, -1.f);
-        shader.set_unifroms3f("camera.horizontal", 4.f, 0.f, 0.f);
-        shader.set_unifroms3f("camera.vertical", 0.f, 2.f, 0.f);
-        shader.set_unifroms3f("camera.origin", 0.f, 0.f, 0.f);
-        shader.set_unifroms1i("world.objectCount", 4);
-        shader.set_unifroms3f("world.objects[0].center", .0f, .0f, -1.f);
-        shader.set_unifroms1f("world.objects[0].radius", .21f);
-        shader.set_unifroms3f("world.objects[1].center", -.31f, -.31f, -3.f);
-        shader.set_unifroms1f("world.objects[1].radius", .52f);
-        shader.set_unifroms3f("world.objects[2].center", -1.71f, -.61f, -4.f);
-        shader.set_unifroms1f("world.objects[2].radius", .2f);
-        shader.set_unifroms3f("world.objects[3].center", -5.41f, 5.31f, -8.f);
-        shader.set_unifroms1f("world.objects[3].radius", .2f);
+        // shader.set_unifroms3f("camera.left_lower_corner", -2.f, -1.f, -1.f);
+        // shader.set_unifroms3f("camera.horizontal", 4.f, 0.f, 0.f);
+        // shader.set_unifroms3f("camera.vertical", 0.f, 2.f, 0.f);
+        // shader.set_unifroms3f("camera.origin", 0.f, 0.f, 0.f);
+        // shader.set_unifroms1i("world.objectCount", 4);
+        // shader.set_unifroms3f("world.objects[0].center", .0f, .0f, -1.f);
+        // shader.set_unifroms1f("world.objects[0].radius", .21f);
+        // shader.set_unifroms3f("world.objects[1].center", -.31f, -.31f, -3.f);
+        // shader.set_unifroms1f("world.objects[1].radius", .52f);
+        // shader.set_unifroms3f("world.objects[2].center", -1.71f, -.61f, -4.f);
+        // shader.set_unifroms1f("world.objects[2].radius", .2f);
+        // shader.set_unifroms3f("world.objects[3].center", -5.41f, 5.31f, -8.f);
+        // shader.set_unifroms1f("world.objects[3].radius", .2f);
 
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
