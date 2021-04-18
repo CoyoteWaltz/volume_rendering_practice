@@ -33,6 +33,8 @@ public:
 
     // set unifroms
     void set_unifroms4f(const std::string &name, float v0, float v1, float v2, float v3);
+    void set_unifroms3f(const std::string &name, float v0, float v1, float v2);
+    void set_unifroms2f(const std::string &name, float v0, float v1);
     void set_unifroms1f(const std::string &name, float value);
     void set_unifroms1i(const std::string &name, int value);
     void set_unifroms_mat4f(const std::string &name, const glm::mat4& mat);
