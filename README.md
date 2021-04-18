@@ -4,6 +4,7 @@
 
 ## About CODE
 
+```bash
 .
 ├── CMakeLists.txt
 ├── README.md
@@ -41,6 +42,8 @@
     │   └── vertex_buffer_layout.cpp
     ├── main.cpp
     └── utils.cpp
+```
+
 
 ## Objective
 
