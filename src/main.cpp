@@ -32,6 +32,32 @@ void handle_input(GLFWwindow *window)
     }
 }
 
+double lastTime = glfwGetTime();
+int frames = 0;
+
+void show_fps(GLFWwindow *window)
+{
+    // Measure speed
+    double currentTime = glfwGetTime();
+    double delta = currentTime - lastTime;
+    frames++;
+    if (delta >= 1.0)
+    {
+        // If last cout was more than 1 sec ago
+        std::cout << "million-second per frame: " << 1000.0 / double(frames) << std::endl;
+
+        double fps = double(frames) / delta;
+
+        std::stringstream ss;
+        ss << " [" << fps << " FPS]";
+
+        glfwSetWindowTitle(window, ss.str().c_str());
+
+        frames = 0;
+        lastTime = currentTime;
+    }
+}
+
 int main(int argc, char **argv)
 {
     // start GL context and O/S window using the GLFW helper library
@@ -146,7 +172,7 @@ int main(int argc, char **argv)
         // Texture texture(textures_path + "ttt.png");
         // texture.bind();                        // send a int uniform slot
         Texture envTexture(textures_path + "envmap6.jpg");
-        envTexture.bind(1);                        // send a int uniform slot
+        envTexture.bind(1);                   // send a int uniform slot
         shader.set_unifroms1i("u_envMap", 1); // texture => slot 0
         // shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
         // shader.set_unifroms_mat4f("u_MVP", mvp);
@@ -190,6 +216,7 @@ int main(int argc, char **argv)
             // 为什么 unsigned
             glfwSwapBuffers(window);
             glfwPollEvents();
+            show_fps(window);
         }
         // glDebugMessageCallback()
         // close GL context and any other GLFW resources

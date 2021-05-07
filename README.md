@@ -85,6 +85,16 @@ Use C++ with OpenGL & GLSL as programming language
 
 ### Paper reading
 
+#### [Optical models for direct volume rendering](https://ieeexplore.ieee.org/abstract/document/468400)
+
+
+
+#### [Direct Volume Rendering: A 3D Plotting Technique for Scientific Data](https://ieeexplore.ieee.org/document/4418774)
+
+
+
+
+
 #### Local Ambient Occlusion in Direct Volume Rendering
 
 TODO
@@ -136,6 +146,22 @@ Originally introduced as an extension to OpenGL 1.4, GLSL was formally included 
 - Cross-platform
 - Write shaders
 - Each hardware vendor includes the GLSL compiler in their drive
+
+#### Shader
+
+Ended with a **main** function which returns a color assigned to the global variable **gl_FragColor**.
+
+Precision: is crucial to type float. Lower precision means faster rendering, but at the cost of quality. Medium precision => `mediump`, `lowp`, `highp`
+
+Uniforms: You can picture the uniforms like little bridges between the CPU and the GPU.
+
+Varying: **gl_FragCoord**: a default input vec4, which holds the screen coordinates of the *pixel* or *screen fragment* that the active thread is working on. It varies from thread to thread.
+
+
+
+*You will discover that sometimes coding in GLSL is very similar to putting ships inside bottles. Is equally hard, beautiful and gratifying.*
+
+
 
 ### 3D rendering, volume rendering
 

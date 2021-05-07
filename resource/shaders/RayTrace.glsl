@@ -279,7 +279,7 @@ World createWorld()
     
     world.objectCount=4;
     world.objects[0]=createSphere(vec3(0.,0.,-3.),.35,MATERIAL_LAMBERTIAN,0);
-    world.objects[1]=createSphere(vec3(.7,0.,-1.),.15,MATERIAL_METALLIC,1);
+    world.objects[1]=createSphere(vec3(.9,0.,-1.),.15,MATERIAL_METALLIC,1);
     world.objects[2]=createSphere(vec3(-.7,0.,-1.),.15,MATERIAL_DIELECTRIC,2);
     world.objects[3]=createSphere(vec3(0.,-100.5,-1.),100.,MATERIAL_LAMBERTIAN,3);
     
