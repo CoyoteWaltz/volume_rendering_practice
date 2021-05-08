@@ -35,6 +35,13 @@ void handle_input(GLFWwindow *window)
 double lastTime = glfwGetTime();
 int frames = 0;
 
+int g_angle = 0;
+
+float angle2radian(const float &ang)
+{
+    return ang * glm::pi<float>() / 180.0;
+}
+
 void show_fps(GLFWwindow *window)
 {
     // Measure speed
@@ -113,18 +120,49 @@ int main(int argc, char **argv)
 
     // actually 这些 vertices 只有 position 属性
     // 如果有其他属性 那么在 attrib point 的时候就要 计算其他步长之类的计算
-    float vertices[] = {
-        1.0f, 1.0f, 0.0f,   // top right
-        1.0f, -1.0f, 0.0f,  // bottom right
-        -1.0f, -1.0f, 0.0f, // bottom left
-        -1.0f, 1.0f, 0.0f   // top left
-        // 给出 纹理坐标
-    };
-    // index of a triangle
-    unsigned int indices[] = {
-        0, 1, 3, // first Triangle
-        1, 2, 3  // second Triangle
-    };           // 必须是 unsigned
+    // float vertices[] = {
+    //     1.0f, 1.0f, 0.0f,   // top right
+    //     1.0f, -1.0f, 0.0f,  // bottom right
+    //     -1.0f, -1.0f, 0.0f, // bottom left
+    //     -1.0f, 1.0f, 0.0f   // top left
+    //     // 给出 纹理坐标
+    // };
+    // // index of a triangle
+    // unsigned int indices[] = {
+    //     0, 1, 3, // first Triangle
+    //     1, 2, 3  // second Triangle
+    // };           // 必须是 unsigned
+
+    float vertices[24] = {
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 1.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 1.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 1.0};
+    // draw the six faces of the boundbox by drawwing triangles
+    // draw it contra-clockwise
+    // front: 1 5 7 3
+    // back: 0 2 6 4
+    // left��0 1 3 2
+    // right:7 5 4 6
+    // up: 2 3 7 6
+    // down: 1 0 4 5
+    unsigned int indices[36] = {
+        1, 5, 7,
+        7, 3, 1,
+        0, 2, 6,
+        6, 4, 0,
+        0, 1, 3,
+        3, 2, 0,
+        7, 5, 4,
+        4, 6, 7,
+        2, 3, 7,
+        7, 6, 2,
+        1, 0, 4,
+        4, 5, 1};
 
     {
         // gl 如何 blend 获取 GL_SRC_ALPHA 在这之上的 alpha' = 1 - alpha
@@ -138,7 +176,7 @@ int main(int argc, char **argv)
         // GLCALL(glEnable(GL_BLEND));
         // call deconstructor
         VertexBuffer vb(vertices, sizeof(vertices));
-        IndexBuffer ib(indices, 6);
+        IndexBuffer ib(indices, 36);
         VertexArray va;
         VertexBufferLayout layout;
         layout.push<float>(3); // layout 3D xyz => 3
@@ -147,20 +185,33 @@ int main(int argc, char **argv)
 
         // 来个投影矩阵 正交变换矩阵 6 个参数 left right bottom top narZ farZ 关于 viewport plane 的
         // 给定这些参数 就能创建一个 正交矩阵 game101 C4 学过哦
-        // glm::mat4 proj = glm::mat4(1.f);
-        // glm::mat4 view = glm::mat4(1.f);
-        // glm::mat4 model = glm::mat4(1.f);
+        glm::mat4 proj = glm::mat4(1.f);
+        glm::mat4 view = glm::mat4(1.f);
+
+        //  transform the box
+        proj = glm::perspective(10.0f, (float)width / height, .1f, 200.f);
+        view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f),
+                           glm::vec3(0.0f, 0.0f, 0.0f),
+                           glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 model = glm::mat4(1.f);
+        model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle), glm::vec3(0.0f, 1.0f, 0.0f));
+        // to make the "head256.raw" i.e. the volume data stand up.
+        // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
+        model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
+        model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
+        // notice the multiplication order: reverse order of transform
+
         // proj = glm::ortho(-200.f, 200.f, -150.f, 150.f, -1.f, 1.f);
         // view 矩阵 移动 camera 实际上是对物体做 reverse 的移动
         // camera 向左 50 => 物体向右 50 对一个 I 做 translate 变换
         // view = glm::translate(glm::mat4(1.f), glm::vec3(50.f, 0.f, 0.f));
         // model = glm::translate(glm::mat4(1.f), glm::vec3(-80.f, 20.f, 0.f));
         // glm::mat4 model = glm::rotate(glm::mat4(1.f), 0.22f, glm::vec3(1, 1, 0));
-        // glm::mat4 mvp = proj * view * model;
+        glm::mat4 mvp = proj * view * model;
 
-        // Shader shader(shaders_path + "Basic.shader");
+        Shader shader(shaders_path + "Basic.shader");
         // Shader shader(shaders_path + "HelloWorld.shader");
-        Shader shader(shaders_path + "RayTrace.glsl");
+        // Shader shader(shaders_path + "RayTrace.glsl");
         shader.bind();
         // location of the uniform variable according to the name in shader
         // GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
@@ -169,14 +220,15 @@ int main(int argc, char **argv)
         // shader.set_unifroms4f("u_Color", r, g, b, a);
         // shader.
 
-        // Texture texture(textures_path + "ttt.png");
-        // texture.bind();                        // send a int uniform slot
-        Texture envTexture(textures_path + "envmap6.jpg");
-        envTexture.bind(1);                   // send a int uniform slot
-        shader.set_unifroms1i("u_envMap", 1); // texture => slot 0
-        // shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
-        // shader.set_unifroms_mat4f("u_MVP", mvp);
-        shader.set_unifroms2f("screenSize", width, height);
+        Texture texture(textures_path + "ttt.png");
+        texture.bind(); // send a int uniform slot
+        // Texture envTexture(textures_path + "envmap6.jpg");
+        // Texture envTexture(textures_path + "ttt.png");
+        // envTexture.bind(1);                   // send a int uniform slot
+        // shader.set_unifroms1i("u_envMap", 1); // texture => slot 1
+        shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
+        shader.set_unifroms_mat4f("u_MVP", mvp);
+        // shader.set_unifroms2f("screenSize", width, height);
         // shader.set_unifroms3f("camera.left_lower_corner", -2.f, -1.f, -1.f);
         // shader.set_unifroms3f("camera.horizontal", 4.f, 0.f, 0.f);
         // shader.set_unifroms3f("camera.vertical", 0.f, 2.f, 0.f);
@@ -206,6 +258,17 @@ int main(int argc, char **argv)
         {
             handle_input(window);
             renderer.clear();
+
+            model = glm::mat4(1.f);
+            model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle), glm::vec3(0.0f, 1.0f, 0.0f));
+            // to make the "head256.raw" i.e. the volume data stand up.
+            // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
+            model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
+            model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
+            glm::mat4 mvp = proj * view * model;
+            g_angle += 1.;
+
+            shader.set_unifroms_mat4f("u_MVP", mvp);
 
             // drawing
             // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
