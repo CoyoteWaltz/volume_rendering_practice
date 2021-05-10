@@ -1,7 +1,7 @@
 #include "custom/texture.h"
 #include "vender/stb_image.h"
 
-Texture::Texture(const std::string &file_path)
+Texture::Texture(const std::string &file_path, const bool empty)
     : local_buffer(nullptr), file_path(file_path), renderer_id(0),
       width(0), height(0), bit_per_pixel(0)
 {
@@ -9,7 +9,9 @@ Texture::Texture(const std::string &file_path)
     // 图片是左上角 (0,0)
     stbi_set_flip_vertically_on_load(1);
     // 变量传 ptr
-    local_buffer = stbi_load(file_path.c_str(), &width, &height, &bit_per_pixel, 4); // rgba
+    if (!empty) {
+        local_buffer = stbi_load(file_path.c_str(), &width, &height, &bit_per_pixel, 4); // rgba
+    }
 
     GLCALL(glGenTextures(1, &renderer_id));
     GLCALL(glBindTexture(GL_TEXTURE_2D, renderer_id));

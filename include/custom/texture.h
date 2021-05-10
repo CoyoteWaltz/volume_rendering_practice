@@ -15,7 +15,7 @@ private:
     int bit_per_pixel;
 
 public:
-    Texture(const std::string &file_path);
+    Texture(const std::string &file_path, const bool empty = false);
     ~Texture();
 
     void bind(unsigned int slot = 0) const; // texture slot

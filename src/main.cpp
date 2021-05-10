@@ -133,15 +133,16 @@ int main(int argc, char **argv)
     //     1, 2, 3  // second Triangle
     // };           // 必须是 unsigned
 
-    float vertices[24] = {
-        0.0, 0.0, 0.0,
-        0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0,
-        0.0, 1.0, 1.0,
-        1.0, 0.0, 0.0,
-        1.0, 0.0, 1.0,
-        1.0, 1.0, 0.0,
-        1.0, 1.0, 1.0};
+    // 如果要再传入一个 xyz 给 location 需要 double 一下数据...
+    float vertices[48] = {
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+        0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+        1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+        1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+        1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     // draw the six faces of the boundbox by drawwing triangles
     // draw it contra-clockwise
     // front: 1 5 7 3
@@ -151,6 +152,7 @@ int main(int argc, char **argv)
     // up: 2 3 7 6
     // down: 1 0 4 5
     unsigned int indices[36] = {
+        // counter-clockwise for cull face
         1, 5, 7,
         7, 3, 1,
         0, 2, 6,
@@ -180,6 +182,7 @@ int main(int argc, char **argv)
         VertexArray va;
         VertexBufferLayout layout;
         layout.push<float>(3); // layout 3D xyz => 3
+        layout.push<float>(3); // layout 3D color => 3 the same to xyz
         // layout.push<float>(2); // layout 3D texture coord => 2
         va.add_buffer(vb, layout);
 
@@ -189,10 +192,10 @@ int main(int argc, char **argv)
         glm::mat4 view = glm::mat4(1.f);
 
         //  transform the box
-        proj = glm::perspective(10.0f, (float)width / height, .1f, 200.f);
-        view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f),
+        proj = glm::perspective(1.0f, (float)width / height, .1f, 200.f);
+        view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
                            glm::vec3(0.0f, 0.0f, 0.0f),
-                           glm::vec3(0.0f, 1.0f, 0.0f));
+                           glm::vec3(0.0f, 1.f, 0.0f));
         glm::mat4 model = glm::mat4(1.f);
         model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle), glm::vec3(0.0f, 1.0f, 0.0f));
         // to make the "head256.raw" i.e. the volume data stand up.
@@ -209,7 +212,8 @@ int main(int argc, char **argv)
         // glm::mat4 model = glm::rotate(glm::mat4(1.f), 0.22f, glm::vec3(1, 1, 0));
         glm::mat4 mvp = proj * view * model;
 
-        Shader shader(shaders_path + "Basic.shader");
+        Shader shader(shaders_path + "face.shader");
+        // Shader shader(shaders_path + "Basic.shader");
         // Shader shader(shaders_path + "HelloWorld.shader");
         // Shader shader(shaders_path + "RayTrace.glsl");
         shader.bind();
@@ -220,14 +224,17 @@ int main(int argc, char **argv)
         // shader.set_unifroms4f("u_Color", r, g, b, a);
         // shader.
 
-        Texture texture(textures_path + "ttt.png");
-        texture.bind(); // send a int uniform slot
+        // Texture texture(textures_path + "ttt.png", true);
+        // texture.bind(); // send a int uniform slot
+        // Texture texture(textures_path + "ttt.png");
+        // texture.bind(); // send a int uniform slot
         // Texture envTexture(textures_path + "envmap6.jpg");
         // Texture envTexture(textures_path + "ttt.png");
         // envTexture.bind(1);                   // send a int uniform slot
         // shader.set_unifroms1i("u_envMap", 1); // texture => slot 1
-        shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
+        // shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
         shader.set_unifroms_mat4f("u_MVP", mvp);
+        shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
         // shader.set_unifroms2f("screenSize", width, height);
         // shader.set_unifroms3f("camera.left_lower_corner", -2.f, -1.f, -1.f);
         // shader.set_unifroms3f("camera.horizontal", 4.f, 0.f, 0.f);
@@ -274,7 +281,7 @@ int main(int argc, char **argv)
             // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
             // gl 其实知道 context
             // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-            renderer.draw(va, ib, shader);
+            renderer.draw(va, ib, shader, true, GL_FRONT);
             // GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
             // 为什么 unsigned
             glfwSwapBuffers(window);

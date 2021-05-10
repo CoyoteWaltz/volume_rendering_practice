@@ -10,7 +10,7 @@ class Renderer
 {
 public:
     Renderer();
-    void draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader) const;
+    void draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader, const bool gl_cull_face, const unsigned int gl_faces) const;
     void clear() const;
 };
 
