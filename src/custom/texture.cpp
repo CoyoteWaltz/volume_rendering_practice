@@ -49,33 +49,8 @@ Texture1D::Texture1D(const std::string &file_path, const bool empty)
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     //
     glTexImage1D(type, 0, GL_RGBA8, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, local_buffer);
-    // free(local_buffer);
     delete[] local_buffer;
     local_buffer = nullptr;
-
-    // flip vertically 图像 因为 OpenGL 的坐标是左下角 (0,0)
-    // 图片是左上角 (0,0)
-    // stbi_set_flip_vertically_on_load(1);
-    // // 变量传 ptr
-    // if (!empty)
-    // {
-    //     local_buffer = stbi_load(file_path.c_str(), &width, &height, &bit_per_pixel, 4); // rgba
-    // }
-
-    // GLCALL(glGenTextures(1, &renderer_id));
-    // GLCALL(glBindTexture(type, renderer_id));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-
-    // GLCALL(glTexImage2D(type, 0, GL_RGBA8, width, height, 0,
-    //                     GL_RGBA, GL_UNSIGNED_BYTE, local_buffer));
-    // GLCALL(glBindTexture(type, 0));
-    // if (local_buffer)
-    // {
-    //     stbi_image_free(local_buffer);
-    // }
 }
 
 Texture1D::~Texture1D()
@@ -123,30 +98,7 @@ Texture3D::Texture3D(const std::string &file_path, const bool empty)
     : Texture(GL_TEXTURE_3D), local_buffer(nullptr), file_path(file_path),
       width(0), height(0)
 {
-    // flip vertically 图像 因为 OpenGL 的坐标是左下角 (0,0)
-    // 图片是左上角 (0,0)
-    // stbi_set_flip_vertically_on_load(1);
-    // // 变量传 ptr
-    // if (!empty)
-    // {
-    //     local_buffer = stbi_load(file_path.c_str(), &width, &height, &bit_per_pixel, 4); // rgba
-    // }
-
-    // GLCALL(glGenTextures(1, &renderer_id));
-    // GLCALL(glBindTexture(type, renderer_id));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    // GLCALL(glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-
-    // GLCALL(glTexImage2D(type, 0, GL_RGBA8, width, height, 0,
-    //                     GL_RGBA, GL_UNSIGNED_BYTE, local_buffer));
-    // GLCALL(glBindTexture(type, 0));
-    // if (local_buffer)
-    // {
-    //     stbi_image_free(local_buffer);
-    // }
-
+    // temp hardcode data
     const unsigned int w = 256;
     const unsigned int h = 256;
     const unsigned int d = 256;

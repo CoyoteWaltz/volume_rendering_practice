@@ -3,6 +3,22 @@
 */
 #include "include/libs.h"
 
+double lastTime = glfwGetTime();
+int frames = 0;
+
+int g_angle_horizontal = 90;
+int g_angle_vertical = 0;
+
+void horizontal_rotate(int angle = 1)
+{
+    g_angle_horizontal = (g_angle_horizontal + angle) % 360;
+}
+
+void vertical_rotate(int angle = 1)
+{
+    g_angle_vertical = (g_angle_vertical + angle) % 360;
+}
+
 // 非得这么写 declaration
 void window_resize_callback(GLFWwindow *window, const int width, const int height);
 void padding_viewport(const int width, const int height, const int padding);
@@ -28,14 +44,36 @@ void handle_input(GLFWwindow *window)
     else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
         // hit space change color
-        glClearColor(1.f, 1.f, 1.f, 1.f);
+        // glClearColor(1.f, 1.f, 1.f, 1.f);
+        std::cout << "归零!" << std::endl;
+        g_angle_horizontal = 0;
+        g_angle_vertical = 0;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+        std::cout << "on key left press!" << std::endl;
+        horizontal_rotate(5);
+        std::cout << "current angle on y axis: " << g_angle_horizontal << std::endl;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+        std::cout << "on key right press!" << std::endl;
+        horizontal_rotate(-5);
+        std::cout << "current angle on y axis: " << g_angle_horizontal << std::endl;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        std::cout << "on key up press!" << std::endl;
+        vertical_rotate(-5);
+        std::cout << "current angle on x axis: " << g_angle_vertical << std::endl;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        std::cout << "on key down press!" << std::endl;
+        vertical_rotate(5);
+        std::cout << "current angle on x axis: " << g_angle_vertical << std::endl;
     }
 }
-
-double lastTime = glfwGetTime();
-int frames = 0;
-
-int g_angle = 0;
 
 float angle2radian(const float &ang)
 {
@@ -65,8 +103,21 @@ void show_fps(GLFWwindow *window)
     }
 }
 
+void test_load_tiff()
+{
+    const std::string filename = "../resource/textures/neuro.tif";
+    // FILE *fp;
+    // size_t size = 1000005;
+    // unsigned char* data = new unsigned char[size]; // 8bit
+    // if (!(fp = fopen(filename.c_str(), "rb"))) {
+
+    // }
+}
+
 int main(int argc, char **argv)
 {
+    // test_load_tiff();
+    // return 1;
     // start GL context and O/S window using the GLFW helper library
     if (!glfwInit())
     {
@@ -120,19 +171,6 @@ int main(int argc, char **argv)
 
     // actually 这些 vertices 只有 position 属性
     // 如果有其他属性 那么在 attrib point 的时候就要 计算其他步长之类的计算
-    // float vertices[] = {
-    //     1.0f, 1.0f, 0.0f,   // top right
-    //     1.0f, -1.0f, 0.0f,  // bottom right
-    //     -1.0f, -1.0f, 0.0f, // bottom left
-    //     -1.0f, 1.0f, 0.0f   // top left
-    //     // 给出 纹理坐标
-    // };
-    // // index of a triangle
-    // unsigned int indices[] = {
-    //     0, 1, 3, // first Triangle
-    //     1, 2, 3  // second Triangle
-    // };           // 必须是 unsigned
-
     // 如果要再传入一个 xyz 给 location 需要 double 一下数据...
     float vertices[48] = {
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -192,12 +230,15 @@ int main(int argc, char **argv)
         glm::mat4 view = glm::mat4(1.f);
 
         //  transform the box
-        proj = glm::perspective(.7f, (float)width / height, .1f, 200.f);
+        proj = glm::perspective(.9f, (float)width / height, .1f, 200.f);
         view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
                            glm::vec3(0.0f, 0.0f, 0.0f),
                            glm::vec3(0.0f, 1.f, 0.0f));
         glm::mat4 model = glm::mat4(1.f);
-        model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle), glm::vec3(0.0f, 1.0f, 0.0f));
+        // y 轴 旋转
+        model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_horizontal), glm::vec3(0.0f, 1.0f, 0.0f));
+        // x 轴 旋转
+        model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_vertical), glm::vec3(1.0f, 0.f, 0.0f));
         // to make the "head256.raw" i.e. the volume data stand up.
         // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
         model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
@@ -223,45 +264,6 @@ int main(int argc, char **argv)
         Texture2D texture("../resource/textures/ttt.png", true);
         Texture3D face_texture("");
         Texture1D transfer_function("../resource/textures/tff.dat");
-        // exit(1);
-        // texture.bind(); // send a int uniform slot
-        // raycast_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
-        // std::cout << "xxxx here" << std::endl;
-
-        // Shader shader(shaders_path + "Basic.shader");
-        // Shader shader(shaders_path + "HelloWorld.shader");
-        // Shader shader(shaders_path + "RayTrace.glsl");
-        // location of the uniform variable according to the name in shader
-        // GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
-        // 设定值
-        // GLCALL(glUniform4f(location, r, g, b, a));
-        // shader.set_unifroms4f("u_Color", r, g, b, a);
-        // shader.
-
-        // Texture2D texture(textures_path + "ttt.png", true);
-        // texture.bind(); // send a int uniform slot
-        // Texture2D texture(textures_path + "ttt.png");
-        // texture.bind(); // send a int uniform slot
-        // Texture2D envTexture(textures_path + "envmap6.jpg");
-        // Texture2D envTexture(textures_path + "ttt.png");
-        // envTexture.bind(1);                   // send a int uniform slot
-        // shader.set_unifroms1i("u_envMap", 1); // texture => slot 1
-        // raycast_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
-
-        // shader.set_unifroms2f("screenSize", width, height);
-        // shader.set_unifroms3f("camera.left_lower_corner", -2.f, -1.f, -1.f);
-        // shader.set_unifroms3f("camera.horizontal", 4.f, 0.f, 0.f);
-        // shader.set_unifroms3f("camera.vertical", 0.f, 2.f, 0.f);
-        // shader.set_unifroms3f("camera.origin", 0.f, 0.f, 0.f);
-        // shader.set_unifroms1i("world.objectCount", 4);
-        // shader.set_unifroms3f("world.objects[0].center", .0f, .0f, -1.f);
-        // shader.set_unifroms1f("world.objects[0].radius", .21f);
-        // shader.set_unifroms3f("world.objects[1].center", -.31f, -.31f, -3.f);
-        // shader.set_unifroms1f("world.objects[1].radius", .52f);
-        // shader.set_unifroms3f("world.objects[2].center", -1.71f, -.61f, -4.f);
-        // shader.set_unifroms1f("world.objects[2].radius", .2f);
-        // shader.set_unifroms3f("world.objects[3].center", -5.41f, 5.31f, -8.f);
-        // shader.set_unifroms1f("world.objects[3].radius", .2f);
 
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
@@ -275,25 +277,24 @@ int main(int argc, char **argv)
 
         while (!glfwWindowShouldClose(window))
         {
-            // std::cout << "----????" << std::endl;
             face_shader.bind();
             // 要先 bind 才能 set uniform
             handle_input(window);
             renderer.clear();
 
             model = glm::mat4(1.f);
-            model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle), glm::vec3(0.0f, 1.0f, 0.0f));
+            // y 轴 旋转
+            model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_horizontal), glm::vec3(0.0f, 1.0f, 0.0f));
+            // x 轴 旋转
+            model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_vertical), glm::vec3(1.0f, 0.f, 0.0f));
             // to make the "head256.raw" i.e. the volume data stand up.
-            // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
-            model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
+            model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
+            // model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
             model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
             glm::mat4 mvp = proj * view * model;
-            g_angle += 1.;
+            // g_angle += 1.;
 
             face_shader.set_unifroms_mat4f("u_MVP", mvp);
-            // std::cout << "????" << std::endl;
-
-            // face_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
 
             // drawing
             // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
@@ -312,8 +313,9 @@ int main(int argc, char **argv)
             raycast_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
             raycast_shader.set_unifroms1i("u_FaceTexture", 1);
             raycast_shader.set_unifroms1i("u_TransferFunc", 2);
+            raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
 
-            renderer.draw(va, ib, raycast_shader, true, GL_BACK);
+            renderer.draw(va, ib, raycast_shader, true, GL_FRONT);
             raycast_shader.unbind();
 
             // GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
