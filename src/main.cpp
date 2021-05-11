@@ -192,7 +192,7 @@ int main(int argc, char **argv)
         glm::mat4 view = glm::mat4(1.f);
 
         //  transform the box
-        proj = glm::perspective(1.0f, (float)width / height, .1f, 200.f);
+        proj = glm::perspective(.7f, (float)width / height, .1f, 200.f);
         view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
                            glm::vec3(0.0f, 0.0f, 0.0f),
                            glm::vec3(0.0f, 1.f, 0.0f));
@@ -212,11 +212,25 @@ int main(int argc, char **argv)
         // glm::mat4 model = glm::rotate(glm::mat4(1.f), 0.22f, glm::vec3(1, 1, 0));
         glm::mat4 mvp = proj * view * model;
 
-        Shader shader(shaders_path + "face.shader");
+        Shader face_shader(shaders_path + "face.shader");
+        Shader raycast_shader(shaders_path + "raycast.shader");
+        face_shader.bind();
+        face_shader.set_unifroms_mat4f("u_MVP", mvp);
+        raycast_shader.bind();
+        raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
+        // face_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
+
+        Texture2D texture("../resource/textures/ttt.png", true);
+        Texture3D face_texture("");
+        Texture1D transfer_function("../resource/textures/tff.dat");
+        // exit(1);
+        // texture.bind(); // send a int uniform slot
+        // raycast_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
+        // std::cout << "xxxx here" << std::endl;
+
         // Shader shader(shaders_path + "Basic.shader");
         // Shader shader(shaders_path + "HelloWorld.shader");
         // Shader shader(shaders_path + "RayTrace.glsl");
-        shader.bind();
         // location of the uniform variable according to the name in shader
         // GLCALL(int location = glGetUniformLocation(shader, "u_Color"));
         // 设定值
@@ -224,17 +238,16 @@ int main(int argc, char **argv)
         // shader.set_unifroms4f("u_Color", r, g, b, a);
         // shader.
 
-        // Texture texture(textures_path + "ttt.png", true);
+        // Texture2D texture(textures_path + "ttt.png", true);
         // texture.bind(); // send a int uniform slot
-        // Texture texture(textures_path + "ttt.png");
+        // Texture2D texture(textures_path + "ttt.png");
         // texture.bind(); // send a int uniform slot
-        // Texture envTexture(textures_path + "envmap6.jpg");
-        // Texture envTexture(textures_path + "ttt.png");
+        // Texture2D envTexture(textures_path + "envmap6.jpg");
+        // Texture2D envTexture(textures_path + "ttt.png");
         // envTexture.bind(1);                   // send a int uniform slot
         // shader.set_unifroms1i("u_envMap", 1); // texture => slot 1
-        // shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
-        shader.set_unifroms_mat4f("u_MVP", mvp);
-        shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
+        // raycast_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
+
         // shader.set_unifroms2f("screenSize", width, height);
         // shader.set_unifroms3f("camera.left_lower_corner", -2.f, -1.f, -1.f);
         // shader.set_unifroms3f("camera.horizontal", 4.f, 0.f, 0.f);
@@ -255,14 +268,16 @@ int main(int argc, char **argv)
         ib.unbind();
         va.unbind();
         vb.unbind();
-        shader.unbind();
+        face_shader.unbind();
+        raycast_shader.unbind();
 
         Renderer renderer;
 
-        shader.bind();
-
         while (!glfwWindowShouldClose(window))
         {
+            // std::cout << "----????" << std::endl;
+            face_shader.bind();
+            // 要先 bind 才能 set uniform
             handle_input(window);
             renderer.clear();
 
@@ -275,13 +290,32 @@ int main(int argc, char **argv)
             glm::mat4 mvp = proj * view * model;
             g_angle += 1.;
 
-            shader.set_unifroms_mat4f("u_MVP", mvp);
+            face_shader.set_unifroms_mat4f("u_MVP", mvp);
+            // std::cout << "????" << std::endl;
+
+            // face_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
 
             // drawing
             // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
             // gl 其实知道 context
             // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-            renderer.draw(va, ib, shader, true, GL_FRONT);
+            renderer.draw(va, ib, face_shader, true, GL_FRONT);
+            face_shader.unbind();
+            // std::cout << "????" << std::endl;
+
+            raycast_shader.bind();
+
+            raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
+            texture.bind(0);
+            face_texture.bind(1);
+            transfer_function.bind(2);
+            raycast_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
+            raycast_shader.set_unifroms1i("u_FaceTexture", 1);
+            raycast_shader.set_unifroms1i("u_TransferFunc", 2);
+
+            renderer.draw(va, ib, raycast_shader, true, GL_BACK);
+            raycast_shader.unbind();
+
             // GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
             // 为什么 unsigned
             glfwSwapBuffers(window);
@@ -290,7 +324,8 @@ int main(int argc, char **argv)
         }
         // glDebugMessageCallback()
         // close GL context and any other GLFW resources
-        shader.unbind();
+        face_shader.unbind();
+        raycast_shader.unbind();
     }
 
     glfwTerminate();

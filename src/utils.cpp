@@ -12,6 +12,9 @@ void gl_clear_error()
     }
 }
 
+// 关于 error code 
+// (1280).toString(16)  -> '500'
+// find hex define in glew.h
 bool gl_log_call(const char *function, const char *file, int line)
 {
     while (GLenum error = glGetError())

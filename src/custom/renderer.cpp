@@ -2,7 +2,7 @@
 
 Renderer::Renderer()
 {
-    std::cout << "aaa renderer" << std::endl;
+    std::cout << "Init aaa renderer!" << std::endl;
 }
 void Renderer::draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader,
                     const bool gl_cull_face, const unsigned int gl_faces) const
