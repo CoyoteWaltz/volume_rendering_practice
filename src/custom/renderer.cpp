@@ -26,6 +26,7 @@ void Renderer::draw(const VertexArray &va, const IndexBuffer &ib, const Shader &
         // GL_FRONT front face 被 cull 了 (干掉了) 只渲染后面的面
         GLCALL(glEnable(GL_CULL_FACE));
         GLCALL(glCullFace(gl_faces));
+        // glFrontFace(GL_CW);
     }
     va.bind();
     ib.bind();

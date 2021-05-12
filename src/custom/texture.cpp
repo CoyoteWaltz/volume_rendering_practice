@@ -17,15 +17,15 @@ Texture1D::Texture1D(const std::string &file_path, const bool empty)
     // local_buffer = (unsigned char *)calloc(MAX_CNT, sizeof(unsigned char));
     local_buffer = new unsigned char[MAX_CNT];
     file.read(reinterpret_cast<char *>(local_buffer), MAX_CNT);
-    for (size_t i = 0; i < MAX_CNT; i++)
-    {
-        /* code */
-        int data = int(local_buffer[i]);
-        if (data != 0)
-        {
-            std::cout << "local_buffer " << data << std::endl;
-        }
-    }
+    // for (size_t i = 0; i < MAX_CNT; i++)
+    // {
+    //     /* code */
+    //     int data = int(local_buffer[i]);
+    //     if (data != 0)
+    //     {
+    //         std::cout << "local_buffer " << data << std::endl;
+    //     }
+    // }
 
     if (file.eof())
     {
@@ -101,7 +101,7 @@ Texture3D::Texture3D(const std::string &file_path, const bool empty)
     // temp hardcode data
     const unsigned int w = 256;
     const unsigned int h = 256;
-    const unsigned int d = 256;
+    const unsigned int d = 255;
     const char *filename = "../resource/textures/head256.raw";
     FILE *fp;
     size_t size = w * h * d;

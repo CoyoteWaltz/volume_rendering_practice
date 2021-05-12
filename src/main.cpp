@@ -6,7 +6,7 @@
 double lastTime = glfwGetTime();
 int frames = 0;
 
-int g_angle_horizontal = 90;
+int g_angle_horizontal = 0;
 int g_angle_vertical = 0;
 
 void horizontal_rotate(int angle = 1)
@@ -231,9 +231,12 @@ int main(int argc, char **argv)
 
         //  transform the box
         proj = glm::perspective(.9f, (float)width / height, .1f, 200.f);
-        view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
+        // view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
+        //                    glm::vec3(0.0f, 0.0f, 0.0f),
+        //                    glm::vec3(0.0f, 1.f, 0.0f));
+        view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f),
                            glm::vec3(0.0f, 0.0f, 0.0f),
-                           glm::vec3(0.0f, 1.f, 0.0f));
+                           glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 model = glm::mat4(1.f);
         // y 轴 旋转
         model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_horizontal), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -261,7 +264,7 @@ int main(int argc, char **argv)
         raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
         // face_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
 
-        Texture2D texture("../resource/textures/ttt.png", true);
+        Texture2D bf_texture("../resource/textures/ttt.png", true);
         Texture3D face_texture("");
         Texture1D transfer_function("../resource/textures/tff.dat");
 
@@ -306,16 +309,16 @@ int main(int argc, char **argv)
 
             raycast_shader.bind();
 
-            raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
-            texture.bind(0);
-            face_texture.bind(1);
-            transfer_function.bind(2);
-            raycast_shader.set_unifroms1i("u_Texture", 0); // texture => slot 0
-            raycast_shader.set_unifroms1i("u_FaceTexture", 1);
-            raycast_shader.set_unifroms1i("u_TransferFunc", 2);
             raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
+            raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
+            bf_texture.bind(1);
+            face_texture.bind(2);
+            transfer_function.bind(0);
+            raycast_shader.set_unifroms1i("u_bfTexture", 1); // texture => slot 0
+            raycast_shader.set_unifroms1i("u_FaceTexture", 2);
+            raycast_shader.set_unifroms1i("u_TransferFunc", 0);
 
-            renderer.draw(va, ib, raycast_shader, true, GL_FRONT);
+            renderer.draw(va, ib, raycast_shader, true, GL_BACK);
             raycast_shader.unbind();
 
             // GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));

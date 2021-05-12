@@ -23,6 +23,7 @@ void main()
 #version 410 core
 
 layout(location = 0) out vec4 fragColor;
+
 uniform vec2 u_ScreenSize;
 
 uniform sampler1D u_TransferFunc;
@@ -33,13 +34,11 @@ uniform sampler3D u_FaceTexture;
 in vec3 EntryPoint;
 in vec4 ExitPointCoord;
 
-float StepSize = .01;
+float StepSize = .005;
 
 void main()
 {
     // 很诡异 先跳过...
-    // vec3 exitPoint=texture(u_Texture,gl_FragCoord.st).xyz;
-    // vec3 exitPoint=texture(u_Texture,vec2(.5, .5)).xyz;
     // vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st/u_ScreenSize).xyz;
 
     vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0)/2.0;
@@ -103,4 +102,6 @@ void main()
         }
     }
     fragColor=colorAcum;
+    // fragColor = vec4(EntryPoint, 1.0);
+    // fragColor = vec4(exitPoint, 1.0);
 }
