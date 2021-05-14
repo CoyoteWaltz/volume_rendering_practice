@@ -451,7 +451,7 @@ int main(int argc, char **argv)
 
         Texture1D transfer_function("../resource/textures/tff.dat");
         // Texture2D bf_texture("../resource/textures/ttt.png", true);
-        Texture3D face_texture("");
+        Texture3D face_texture(false);
 
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
@@ -465,101 +465,21 @@ int main(int argc, char **argv)
 
         Renderer renderer(width, height, 1);
 
-        unsigned int tex_id;
-        unsigned int framebuffer_id;
-        unsigned int depthbuffer_id;
-
-        GLCALL(glGenTextures(1, &tex_id));
-        GLCALL(glBindTexture(GL_TEXTURE_2D, tex_id));
-        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-        // GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0));
-        // GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0));
-
-        // internal type GL_RGBA16F 和我们在 glsl 中如何存的 有关
-        GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0,
-                            GL_RGBA, GL_FLOAT, NULL));
-
-        std::cout << "Init aaa renderer!" << std::endl;
-        GLCALL(glBindTexture(GL_TEXTURE_2D, 0));
-        GLCALL(glActiveTexture(GL_TEXTURE0 + 1)); // texture slot 最大 32 个
-        GLCALL(glBindTexture(GL_TEXTURE_2D, tex_id));
-
-        // attach the texture and the depth buffer to the framebuffer
-        GLCALL(glGenFramebuffers(1, &framebuffer_id));
-        GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id));
-        // 给 frame buffer 绑定一个指定 level 的 mipmap 注意 0 是原始图
-        GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_id, 0));
-        GLCALL(glDrawBuffer(GL_COLOR_ATTACHMENT0));
-
-        // 渲染缓冲区
-        GLCALL(glGenRenderbuffers(1, &depthbuffer_id));
-        GLCALL(glBindRenderbuffer(GL_RENDERBUFFER, depthbuffer_id));
-        GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height));
-
-        std::cout << "----ssss " << tex_id << std::endl;
-        // 绑定一个 depth buffer
-        GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthbuffer_id));
-
-        GLCALL(unsigned int status = glCheckFramebufferStatus(GL_FRAMEBUFFER));
-        if (status != GL_FRAMEBUFFER_COMPLETE)
-        {
-            switch (status)
-            {
-            case GL_FRAMEBUFFER_COMPLETE:
-                std::cout << "Framebuffer complete." << std::endl;
-                break;
-
-            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-                std::cout << "[ERROR Framebuffer] incomplete: Attachment is NOT complete." << std::endl;
-                break;
-
-            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-                std::cout << "[ERROR Framebuffer] incomplete: No image is attached to FBO." << std::endl;
-                break;
-
-            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
-                std::cout << "[ERROR Framebuffer] incomplete: Attached images have different dimensions." << std::endl;
-                break;
-
-            case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
-                std::cout << "[ERROR Framebuffer] incomplete: Color attached images have different internal formats." << std::endl;
-                break;
-
-            case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-                std::cout << "[ERROR Framebuffer] incomplete: Draw buffer." << std::endl;
-                break;
-
-            case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-                std::cout << "[ERROR Framebuffer] incomplete: Read buffer." << std::endl;
-                break;
-
-            case GL_FRAMEBUFFER_UNSUPPORTED:
-                std::cout << "[ERROR Unsupported] by FBO implementation." << std::endl;
-                break;
-
-            default:
-                std::cout << "[ERROR] Unknow error." << std::endl;
-                break;
-            }
-            exit(EXIT_FAILURE);
-        }
-
-        glEnable(GL_DEPTH_TEST);
+        FrameBuffer frame(width, height);
 
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         while (!glfwWindowShouldClose(window))
         {
-            GLCALL(glBindTexture(GL_TEXTURE_2D, 0));
+            // GLCALL(glBindTexture(GL_TEXTURE_2D, 0));
 
             face_shader.bind();
             // 要先 bind 才能 set uniform
             handle_input(window);
             renderer.clear();
+            frame.bind();
+
             // renderer.bind_fbo();
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
+            // glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
 
             view = glm::mat4(1.f);
             view = glm::lookAt(g_eye_pos,
@@ -579,8 +499,8 @@ int main(int argc, char **argv)
             face_shader.set_unifroms_mat4f("u_MVP", mvp);
             renderer.draw(va, ib, face_shader, true, GL_FRONT);
             face_shader.unbind();
-            GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, 0)); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
-            // renderer.unbind_fbo();
+
+            frame.unbind();
 
             raycast_shader.bind();
 
@@ -591,10 +511,9 @@ int main(int argc, char **argv)
             raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
             raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
             transfer_function.bind(0);
+            frame.bind_color_buffer_to_texture(1);
+
             // bf_texture.bind(1);
-            GLCALL(glActiveTexture(GL_TEXTURE1)); // texture slot 最大 32 个
-            // GLCALL(glBindTexture(GL_TEXTURE_2D, renderer.get_tex_id()));
-            GLCALL(glBindTexture(GL_TEXTURE_2D, tex_id));
 
             face_texture.bind(2);
             raycast_shader.set_unifroms1i("u_TransferFunc", 0);

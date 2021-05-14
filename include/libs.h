@@ -14,5 +14,6 @@
 #include "custom/vertex_buffer_layout.h"
 #include "custom/renderer.h"
 #include "custom/texture.h"
+#include "custom/frame_buffer.h"
 
 #endif

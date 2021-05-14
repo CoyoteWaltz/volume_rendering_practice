@@ -44,6 +44,8 @@ add_library(vertex_buffer_layout STATIC src/custom/vertex_buffer_layout.cpp ${ST
 add_library(shader STATIC src/custom/shader.cpp ${STATIC_DIR}/custom/shader.h)
 # texture lib
 add_library(texture STATIC src/custom/texture.cpp ${STATIC_DIR}/custom/texture.h)
+# frame_buffer lib
+add_library(frame_buffer STATIC src/custom/frame_buffer.cpp ${STATIC_DIR}/custom/frame_buffer.h)
 
 # utils lib
 add_library(utils STATIC src/utils.cpp ${STATIC_DIR}/utils.h)
@@ -61,6 +63,7 @@ set(LIBS
     shader
     texture
     utils
+    frame_buffer
 )
 # renderer
 target_include_directories(renderer
@@ -98,6 +101,11 @@ target_include_directories(texture
     PUBLIC
         ${STATIC_DIR}
 )
+# frame_buffer
+target_include_directories(frame_buffer
+    PUBLIC
+        ${STATIC_DIR}
+)
 # utils
 target_include_directories(utils
     PUBLIC
@@ -113,6 +121,7 @@ target_link_libraries(vertex_array utils)
 target_link_libraries(vertex_buffer_layout utils)
 target_link_libraries(shader utils)
 target_link_libraries(texture utils)
+target_link_libraries(frame_buffer utils)
 
 add_executable(${PROJECT_NAME} 
     ${PROJECT_SOURCE_DIR}/src/main.cpp

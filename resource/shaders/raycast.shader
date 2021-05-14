@@ -34,29 +34,33 @@ uniform sampler3D u_FaceTexture;
 in vec3 EntryPoint;
 in vec4 ExitPointCoord;
 
-float StepSize = .004;
+float StepSize = .003;
 
 void main()
 {
     // 很诡异 先跳过...
-    vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st/u_ScreenSize).xyz;
+    // vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st/u_ScreenSize).xyz;
 
-    // vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0)/2.0;
-    // vec3 exitPoint = texture(u_bfTexture, exitFragCoord / 2.).xyz;
+    vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0)/2.0;
+    vec3 exitPoint = texture(u_bfTexture, exitFragCoord / 2.).xyz;
     if (exitPoint == EntryPoint) {
+        fragColor = vec4(1.);
+
         discard;
+        return;
+
     }
-    // fragColor = vec4(exitPoint, 1.);
-    // return;
+    fragColor = vec4(0.);
+    return;
     ///-----
 
     vec3 dir=exitPoint-EntryPoint;
     float len=length(dir);// the length from front to back is calculated and used to terminate the ray
     vec3 deltaDir=normalize(dir)*StepSize;
     float deltaDirLen=length(deltaDir);
-    // vec3 voxelCoord=EntryPoint;
+    vec3 voxelCoord=EntryPoint;
     // x 方向少了一半...
-    vec3 voxelCoord=vec3(EntryPoint.x / 2., EntryPoint.y, EntryPoint.z);
+    // vec3 voxelCoord=vec3(EntryPoint.x / 2., EntryPoint.y, EntryPoint.z);
     vec4 colorAcum=vec4(0.);// The dest color
     float alphaAcum=0.;// The  dest alpha for blending
     /* 定义颜色查找的坐标 */

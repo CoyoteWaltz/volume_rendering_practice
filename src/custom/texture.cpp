@@ -116,7 +116,7 @@ Texture2D::~Texture2D()
 }
 
 //////////////// Texture3D
-Texture3D::Texture3D(const std::string &file_path, const bool empty)
+Texture3D::Texture3D(const bool face)
     : Texture(GL_TEXTURE_3D), local_buffer(nullptr), file_path(file_path),
       width(0), height(0)
 {
@@ -124,81 +124,84 @@ Texture3D::Texture3D(const std::string &file_path, const bool empty)
     unsigned int w = 256;
     unsigned int h = 256;
     unsigned int d = 255;
-    // const char *filename = "../resource/textures/head256.raw";
-    // FILE *fp;
-    // size_t size = w * h * d;
-    // local_buffer = new unsigned char[size]; // 8bit
-    // if (!(fp = fopen(filename, "rb")))
-    // {
-    //     std::cout << "Error: opening .raw file failed" << std::endl;
-    //     exit(EXIT_FAILURE);
-    // }
-    // else
-    // {
-    //     std::cout << "OK: open .raw file successed" << std::endl;
-    // }
-    // size_t file_size = fread(local_buffer, sizeof(unsigned char), size, fp);
-    // std::cout << "read file size ? " << file_size << std::endl;
-
-    // fclose(fp);
-
-    // exit(1);
-    ///
-
-    w = 512;
-    h = 512;
-    d = 512;
-
-    const char *filename = "../resource/textures/neuro.tif";
-    TIFF *tif = TIFFOpen(filename, "r");
-    if (!tif)
+    if (face)
     {
-        std::cout << "open file failed! >>> " << filename << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    uint32_t width, height;
-    uint32_t tileWidth, tileLength;
-    uint32_t x, y;
-    // uint32_t type;
 
-    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
-    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tileWidth);
-    TIFFGetField(tif, TIFFTAG_TILELENGTH, &tileLength);
-    // TIFFGetField(tif, TIFFTAG_DATATYPE, &type);
-    std::cout << "TIFFTAG_IMAGEWIDTH " << width
-              << "TIFFTAG_IMAGELENGTH " << height
-              << std::endl;
-    // std::cout << "type " << type << std::endl;
-
-    int dircount = 0;
-    uint32_t depth = 512;
-    uint32_t total = width * height * depth;
-    local_buffer = new unsigned char[total];
-    do
-    {
-        dircount++;
-        uint32_t pixels = width * height;
-        uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
-
-        uint32_t *scan_line = nullptr;
-        if (raster != NULL)
+        const char *filename = "../resource/textures/head256.raw";
+        FILE *fp;
+        size_t size = w * h * d;
+        local_buffer = new unsigned char[size]; // 8bit
+        if (!(fp = fopen(filename, "rb")))
         {
-            if (TIFFReadRGBAImage(tif, width, height, raster, 0))
-            {
-                // std::cout << "read success " << dircount << std::endl;
-                for (size_t i = 0; i < pixels; i++)
-                {
-                    // std::cout << "data: " << i << " " << raster[i] << std::endl;
-                    uint32_t value = raster[i];
-                    int low = (unsigned char)(value);
-                    local_buffer[(dircount - 1) * pixels + i] = low;
-                }
-            }
-            _TIFFfree(raster);
+            std::cout << "Error: opening .raw file failed" << std::endl;
+            exit(EXIT_FAILURE);
         }
-    } while (TIFFReadDirectory(tif)); // go next slice
-    TIFFClose(tif);
+        else
+        {
+            std::cout << "OK: open .raw file successed" << std::endl;
+        }
+        size_t file_size = fread(local_buffer, sizeof(unsigned char), size, fp);
+        std::cout << "read file size ? " << file_size << std::endl;
+
+        fclose(fp);
+    }
+    else
+    {
+        w = 512;
+        h = 512;
+        d = 512;
+
+        const char *filename = "../resource/textures/neuro.tif";
+        TIFF *tif = TIFFOpen(filename, "r");
+        if (!tif)
+        {
+            std::cout << "open file failed! >>> " << filename << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        uint32_t width, height;
+        uint32_t tileWidth, tileLength;
+        uint32_t x, y;
+        // uint32_t type;
+
+        TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+        TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tileWidth);
+        TIFFGetField(tif, TIFFTAG_TILELENGTH, &tileLength);
+        // TIFFGetField(tif, TIFFTAG_DATATYPE, &type);
+        std::cout << "TIFFTAG_IMAGEWIDTH " << width
+                  << "TIFFTAG_IMAGELENGTH " << height
+                  << std::endl;
+        // std::cout << "type " << type << std::endl;
+
+        int dircount = 0;
+        uint32_t depth = 512;
+        uint32_t total = width * height * depth;
+        local_buffer = new unsigned char[total];
+        do
+        {
+            dircount++;
+            uint32_t pixels = width * height;
+            uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
+
+            uint32_t *scan_line = nullptr;
+            if (raster != NULL)
+            {
+                if (TIFFReadRGBAImage(tif, width, height, raster, 0))
+                {
+                    // std::cout << "read success " << dircount << std::endl;
+                    for (size_t i = 0; i < pixels; i++)
+                    {
+                        // std::cout << "data: " << i << " " << raster[i] << std::endl;
+                        uint32_t value = raster[i];
+                        int low = (unsigned char)(value);
+                        local_buffer[(dircount - 1) * pixels + i] = low;
+                    }
+                }
+                _TIFFfree(raster);
+            }
+        } while (TIFFReadDirectory(tif)); // go next slice
+        TIFFClose(tif);
+    }
 
     GLCALL(glGenTextures(1, &renderer_id));
     // bind 3D texture target

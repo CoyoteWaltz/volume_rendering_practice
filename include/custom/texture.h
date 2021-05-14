@@ -72,7 +72,7 @@ private:
     int depth;
 
 public:
-    Texture3D(const std::string &file_path, const bool empty = false);
+    Texture3D(const bool face = false);
     ~Texture3D();
 
     inline int get_width() const { return width; }
