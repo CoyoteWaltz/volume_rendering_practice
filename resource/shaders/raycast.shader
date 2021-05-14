@@ -11,7 +11,7 @@ uniform mat4 u_MVP;
 
 void main()
 {
-    EntryPoint = position;
+    EntryPoint = color;
     gl_Position = u_MVP * vec4(position, 1.0);
     ExitPointCoord = gl_Position;
 }
@@ -34,33 +34,29 @@ uniform sampler3D u_FaceTexture;
 in vec3 EntryPoint;
 in vec4 ExitPointCoord;
 
-float StepSize = .005;
+float StepSize = .004;
 
 void main()
 {
     // 很诡异 先跳过...
-    // vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st/u_ScreenSize).xyz;
+    vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st/u_ScreenSize).xyz;
 
-    vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0)/2.0;
-    vec3 exitPoint = texture(u_bfTexture, exitFragCoord).xyz;
+    // vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0)/2.0;
+    // vec3 exitPoint = texture(u_bfTexture, exitFragCoord / 2.).xyz;
     if (exitPoint == EntryPoint) {
         discard;
     }
-
-    // c = vec4(0.33f, 0.213f, 0.12f, 1.0f);
-    // vec4 textColor = texture(u_Texture, v_texCoord);
-    // c = textColor - (u_Color * 0.66);
-    // vec4 textColor = texture(u_bfTexture, v_texCoord);
-    // fragColor = vec4(exitPoint, .1);
     // fragColor = vec4(exitPoint, 1.);
-
+    // return;
     ///-----
 
     vec3 dir=exitPoint-EntryPoint;
     float len=length(dir);// the length from front to back is calculated and used to terminate the ray
     vec3 deltaDir=normalize(dir)*StepSize;
     float deltaDirLen=length(deltaDir);
-    vec3 voxelCoord=EntryPoint;
+    // vec3 voxelCoord=EntryPoint;
+    // x 方向少了一半...
+    vec3 voxelCoord=vec3(EntryPoint.x / 2., EntryPoint.y, EntryPoint.z);
     vec4 colorAcum=vec4(0.);// The dest color
     float alphaAcum=0.;// The  dest alpha for blending
     /* 定义颜色查找的坐标 */
@@ -77,8 +73,8 @@ void main()
         intensity=texture(u_FaceTexture,voxelCoord).x;
         // 查找传输函数中映射后的值
         // 依赖性纹理读取
-        colorSample=texture(u_TransferFunc,intensity);
-        // colorSample=vec4(intensity);
+        // colorSample=texture(u_TransferFunc,intensity);
+        colorSample=vec4(intensity);
         // modulate the value of colorSample.a
         // front-to-back integration
         if(colorSample.a>0.){
@@ -95,7 +91,7 @@ void main()
             colorAcum.rgb=colorAcum.rgb*colorAcum.a+(1-colorAcum.a)*bgColor.rgb;
             break;
         }
-        else if(colorAcum.a>1.)
+        else if(colorAcum.a>.99)
         {
             colorAcum.a=1.;
             break;

@@ -2,12 +2,163 @@
  * new opengl toturial demo
 */
 #include "include/libs.h"
+#include "tiffio.h"
+#include "tiffio.hxx"
+#include <bitset>
+
+#include <string>
+
+#define X_axis 0
+#define Y_axis 1
+#define Z_axis 2
+
+void test_load_tiff()
+{
+
+    const char *filename = "../resource/textures/neuro.tif";
+    TIFF *tif = TIFFOpen(filename, "r");
+    if (!tif)
+    {
+        std::cout << "open file failed! >>> " << filename << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    uint32_t width, height;
+    uint32_t tileWidth, tileLength;
+    uint32_t x, y;
+    uint32_t type;
+    // tdata_t buf;
+
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tileWidth);
+    TIFFGetField(tif, TIFFTAG_TILELENGTH, &tileLength);
+    TIFFGetField(tif, TIFFTAG_DATATYPE, &type);
+    std::cout << "TIFFTAG_IMAGEWIDTH " << width
+              << "TIFFTAG_IMAGELENGTH " << height
+              << std::endl;
+    std::cout << "type " << type << std::endl;
+
+    // buf = _TIFFmalloc(TIFFTileSize(tif));
+    // for (y = 0; y < imagelength; y += tilelength)
+    //     for (x = 0; x < imagewidth; x += tilewidth)
+    //         tiffreadtile(tif, buf, x, y, 0);
+    // _TIFFfree(buf);
+    // TIFFClose(tif);
+    // uint8 *buffer = (uint8 *)malloc(width * height * sizeof(uint32));
+    // TIFFReadRawStrip(tif, 0, buffer, width * height);
+    int dircount = 0;
+    uint32_t depth = 512;
+    uint32_t total = width * height * depth;
+    unsigned char *buffer = new unsigned char[total];
+    do
+    {
+        dircount++;
+        // if (dircount <= 257)
+        // {
+        //     continue;
+        // }
+
+        uint32_t pixels = width * height;
+        uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
+        // 4279374354
+
+        uint32_t *scan_line = nullptr;
+        if (raster != NULL)
+        {
+            if (TIFFReadRGBAImage(tif, width, height, raster, 0))
+            {
+                std::cout << "read success " << dircount << std::endl;
+                for (size_t i = 0; i < pixels; i++)
+                {
+                    // std::cout << "data: " << i << " " << raster[i] << std::endl;
+                    uint32_t value = raster[i];
+                    // int high = value >> 24;
+                    int low = (unsigned char)(value);
+
+                    buffer[(dircount - 1) * pixels + i] = low;
+                    // std::cout << "buffer------: " << (dircount - 1) * pixels + i << " " << int(buffer[(dircount - 1) * pixels + i]) << " " << value << std::endl;
+
+                    // if (value == 0 || low != 255 || high < 30)
+                    // {
+                    //     continue;
+                    // }
+                    // std::string binary = std::bitset<32>(value).to_string(); //to binary
+
+                    // std::cout << "slice\t" << dircount
+                    //           << "\t" << value
+                    //           << "\tbinary\t" << binary
+                    //           << "\thigh8\t"
+                    //           << "\t" << binary.substr(0, 8)
+                    //           << "\t" << high
+                    //           << "\tlow8\t"
+                    //           << "\t" << binary.substr(24, 32)
+                    //           << "\t" << low
+                    //           << std::endl;
+                }
+                // memcpy(buffer + pixels * (dircount - 1), raster, pixels * sizeof(unsigned char));
+            }
+            _TIFFfree(raster);
+
+            // break;
+            // for (size_t row = 0; row < height; row++)
+            // {
+            //     scan_line = (uint32_t *)_TIFFmalloc(width * (sizeof(uint32_t)));
+            //     if (TIFFReadScanline(tif, scan_line, row, 0) == 1)
+            //     {
+            //         for (size_t i = 0; i < width; i++)
+            //         {
+            //             uint32_t value = scan_line[i];
+            //             int high = value >> 24;
+            //             int low = (unsigned char)(value);
+
+            //             if (value == 0 || low < 30 || high < 30)
+            //             {
+            //                 continue;
+            //             }
+            //             std::string binary = std::bitset<32>(value).to_string(); //to binary
+
+            //             std::cout << "slice\t" << dircount
+            //                       << "\trow\t" << row
+            //                       << "\tcol\t" << i
+            //                       << "\t" << value
+            //                       << "\tbinary\t" << binary
+            //                       << "\tlow8\t"
+            //                       << "\t" << binary.substr(0, 8)
+            //                       << "\t" << low
+            //                       << "\thigh8\t"
+            //                       << "\t" << binary.substr(24, 32)
+            //                       << "\t" << high
+            //                       << std::endl;
+
+            //             // std::cout << "----" << binary << std::endl;
+            //             // return;
+            //         }
+            //         // _TIFFmemcpy()
+            //     }
+            //     _TIFFfree(scan_line);
+            //     scan_line = nullptr;
+            // }
+        }
+        // break;
+    } while (TIFFReadDirectory(tif)); // go next slice
+    // printf("%d directories in %s\n", dircount, argv[1]);
+    TIFFClose(tif);
+    for (size_t i = 512 * 512 * 500; i < total; i++)
+    {
+        std::cout << "id " << i << " " << int(buffer[i]) << std::endl;
+    }
+
+    delete[] buffer;
+    std::cout << "count " << dircount << std::endl;
+}
 
 double lastTime = glfwGetTime();
 int frames = 0;
 
 int g_angle_horizontal = 0;
 int g_angle_vertical = 0;
+
+glm::vec3 g_eye_pos(0.0f, 0.0f, 2.0f); // z 2.0 init
 
 void horizontal_rotate(int angle = 1)
 {
@@ -17,6 +168,13 @@ void horizontal_rotate(int angle = 1)
 void vertical_rotate(int angle = 1)
 {
     g_angle_vertical = (g_angle_vertical + angle) % 360;
+}
+
+void move_eye(float length = 0.05, int axis = Z_axis)
+{
+    glm::vec3 direction(0.f, 0.f, 0.f);
+    direction[axis] = length;
+    g_eye_pos += direction;
 }
 
 // 非得这么写 declaration
@@ -37,6 +195,7 @@ void padding_viewport(const int width, const int height, const int padding = 10)
 
 void handle_input(GLFWwindow *window)
 {
+    int rotate_delta_deg = 3;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
@@ -48,30 +207,54 @@ void handle_input(GLFWwindow *window)
         std::cout << "归零!" << std::endl;
         g_angle_horizontal = 0;
         g_angle_vertical = 0;
+        g_eye_pos = glm::vec3(0.0f, 0.0f, 2.0f); // z 2.0 init
     }
+
     else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
     {
         std::cout << "on key left press!" << std::endl;
-        horizontal_rotate(5);
+        horizontal_rotate(rotate_delta_deg);
         std::cout << "current angle on y axis: " << g_angle_horizontal << std::endl;
     }
     else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
     {
         std::cout << "on key right press!" << std::endl;
-        horizontal_rotate(-5);
+        horizontal_rotate(-rotate_delta_deg);
         std::cout << "current angle on y axis: " << g_angle_horizontal << std::endl;
     }
     else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
     {
         std::cout << "on key up press!" << std::endl;
-        vertical_rotate(-5);
+        vertical_rotate(-rotate_delta_deg);
         std::cout << "current angle on x axis: " << g_angle_vertical << std::endl;
     }
     else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
         std::cout << "on key down press!" << std::endl;
-        vertical_rotate(5);
+        vertical_rotate(rotate_delta_deg);
         std::cout << "current angle on x axis: " << g_angle_vertical << std::endl;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        std::cout << "go forward along z(negative)!" << std::endl;
+        move_eye(-.05, Z_axis);
+        std::cout << "current angle on x axis: " << g_angle_vertical << std::endl;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        std::cout << "go forward along z!" << std::endl;
+        move_eye(.05, Z_axis);
+        std::cout << "current angle on x axis: " << g_angle_vertical << std::endl;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        std::cout << "go forward along x(negative)!" << std::endl;
+        move_eye(-.05, X_axis);
+    }
+    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        std::cout << "go forward along x!" << std::endl;
+        move_eye(.05, X_axis);
     }
 }
 
@@ -101,17 +284,6 @@ void show_fps(GLFWwindow *window)
         frames = 0;
         lastTime = currentTime;
     }
-}
-
-void test_load_tiff()
-{
-    const std::string filename = "../resource/textures/neuro.tif";
-    // FILE *fp;
-    // size_t size = 1000005;
-    // unsigned char* data = new unsigned char[size]; // 8bit
-    // if (!(fp = fopen(filename.c_str(), "rb"))) {
-
-    // }
 }
 
 int main(int argc, char **argv)
@@ -172,6 +344,15 @@ int main(int argc, char **argv)
     // actually 这些 vertices 只有 position 属性
     // 如果有其他属性 那么在 attrib point 的时候就要 计算其他步长之类的计算
     // 如果要再传入一个 xyz 给 location 需要 double 一下数据...
+    // float vertices[24] = {
+    //     0.0, 0.0, 0.0,
+    //     0.0, 0.0, 1.0,
+    //     0.0, 1.0, 0.0,
+    //     0.0, 1.0, 1.0,
+    //     1.0, 0.0, 0.0,
+    //     1.0, 0.0, 1.0,
+    //     1.0, 1.0, 0.0,
+    //     1.0, 1.0, 1.0};
     float vertices[48] = {
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
@@ -230,21 +411,25 @@ int main(int argc, char **argv)
         glm::mat4 view = glm::mat4(1.f);
 
         //  transform the box
-        proj = glm::perspective(.9f, (float)width / height, .1f, 200.f);
+        // proj = glm::perspective(.9f, (float)width / height, .1f, 200.f);
+        // fovy aspect near far
+        proj = glm::perspective(.9f, (float)width / height, 0.1f, 400.f);
+
         // view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
         //                    glm::vec3(0.0f, 0.0f, 0.0f),
         //                    glm::vec3(0.0f, 1.f, 0.0f));
-        view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f),
+        // glm::quat q(1.f, 2.f, 3);  // w x y z!!
+        view = glm::lookAt(g_eye_pos,
                            glm::vec3(0.0f, 0.0f, 0.0f),
                            glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 model = glm::mat4(1.f);
         // y 轴 旋转
-        model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_horizontal), glm::vec3(0.0f, 1.0f, 0.0f));
+        model *= glm::rotate(glm::mat4(1.f), glm::radians(float(g_angle_horizontal)), glm::vec3(0.0f, 1.0f, 0.0f));
         // x 轴 旋转
-        model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_vertical), glm::vec3(1.0f, 0.f, 0.0f));
+        model *= glm::rotate(glm::mat4(1.f), glm::radians(float(g_angle_vertical)), glm::vec3(1.0f, 0.f, 0.0f));
         // to make the "head256.raw" i.e. the volume data stand up.
         // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
-        model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
+        // model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
         model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
         // notice the multiplication order: reverse order of transform
 
@@ -264,9 +449,9 @@ int main(int argc, char **argv)
         raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
         // face_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
 
-        Texture2D bf_texture("../resource/textures/ttt.png", true);
-        Texture3D face_texture("");
         Texture1D transfer_function("../resource/textures/tff.dat");
+        // Texture2D bf_texture("../resource/textures/ttt.png", true);
+        Texture3D face_texture("");
 
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
@@ -276,53 +461,152 @@ int main(int argc, char **argv)
         face_shader.unbind();
         raycast_shader.unbind();
 
-        Renderer renderer;
+        // unsigned int backface_id = bf_texture.get_id();
 
+        Renderer renderer(width, height, 1);
+
+        unsigned int tex_id;
+        unsigned int framebuffer_id;
+        unsigned int depthbuffer_id;
+
+        GLCALL(glGenTextures(1, &tex_id));
+        GLCALL(glBindTexture(GL_TEXTURE_2D, tex_id));
+        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+        GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+        // GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0));
+        // GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0));
+
+        // internal type GL_RGBA16F 和我们在 glsl 中如何存的 有关
+        GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0,
+                            GL_RGBA, GL_FLOAT, NULL));
+
+        std::cout << "Init aaa renderer!" << std::endl;
+        GLCALL(glBindTexture(GL_TEXTURE_2D, 0));
+        GLCALL(glActiveTexture(GL_TEXTURE0 + 1)); // texture slot 最大 32 个
+        GLCALL(glBindTexture(GL_TEXTURE_2D, tex_id));
+
+        // attach the texture and the depth buffer to the framebuffer
+        GLCALL(glGenFramebuffers(1, &framebuffer_id));
+        GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id));
+        // 给 frame buffer 绑定一个指定 level 的 mipmap 注意 0 是原始图
+        GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_id, 0));
+        GLCALL(glDrawBuffer(GL_COLOR_ATTACHMENT0));
+
+        // 渲染缓冲区
+        GLCALL(glGenRenderbuffers(1, &depthbuffer_id));
+        GLCALL(glBindRenderbuffer(GL_RENDERBUFFER, depthbuffer_id));
+        GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height));
+
+        std::cout << "----ssss " << tex_id << std::endl;
+        // 绑定一个 depth buffer
+        GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthbuffer_id));
+
+        GLCALL(unsigned int status = glCheckFramebufferStatus(GL_FRAMEBUFFER));
+        if (status != GL_FRAMEBUFFER_COMPLETE)
+        {
+            switch (status)
+            {
+            case GL_FRAMEBUFFER_COMPLETE:
+                std::cout << "Framebuffer complete." << std::endl;
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+                std::cout << "[ERROR Framebuffer] incomplete: Attachment is NOT complete." << std::endl;
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+                std::cout << "[ERROR Framebuffer] incomplete: No image is attached to FBO." << std::endl;
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
+                std::cout << "[ERROR Framebuffer] incomplete: Attached images have different dimensions." << std::endl;
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
+                std::cout << "[ERROR Framebuffer] incomplete: Color attached images have different internal formats." << std::endl;
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+                std::cout << "[ERROR Framebuffer] incomplete: Draw buffer." << std::endl;
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+                std::cout << "[ERROR Framebuffer] incomplete: Read buffer." << std::endl;
+                break;
+
+            case GL_FRAMEBUFFER_UNSUPPORTED:
+                std::cout << "[ERROR Unsupported] by FBO implementation." << std::endl;
+                break;
+
+            default:
+                std::cout << "[ERROR] Unknow error." << std::endl;
+                break;
+            }
+            exit(EXIT_FAILURE);
+        }
+
+        glEnable(GL_DEPTH_TEST);
+
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         while (!glfwWindowShouldClose(window))
         {
+            GLCALL(glBindTexture(GL_TEXTURE_2D, 0));
+
             face_shader.bind();
             // 要先 bind 才能 set uniform
             handle_input(window);
             renderer.clear();
+            // renderer.bind_fbo();
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
 
+            view = glm::mat4(1.f);
+            view = glm::lookAt(g_eye_pos,
+                               glm::vec3(0.0f, 0.0f, 0.0f),
+                               glm::vec3(0.0f, 1.0f, 0.0f));
             model = glm::mat4(1.f);
             // y 轴 旋转
             model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_horizontal), glm::vec3(0.0f, 1.0f, 0.0f));
             // x 轴 旋转
             model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_vertical), glm::vec3(1.0f, 0.f, 0.0f));
             // to make the "head256.raw" i.e. the volume data stand up.
-            model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
+            // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
             // model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
             model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
             glm::mat4 mvp = proj * view * model;
-            // g_angle += 1.;
-
+            // glm::mat4 mvp2 = glm::mat4(1.f) * proj * glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
             face_shader.set_unifroms_mat4f("u_MVP", mvp);
-
-            // drawing
-            // call draw 三角形 从 第一个数据顶点开始 需要 render 的 size 3 个
-            // gl 其实知道 context
-            // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
             renderer.draw(va, ib, face_shader, true, GL_FRONT);
             face_shader.unbind();
-            // std::cout << "????" << std::endl;
+            GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, 0)); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
+            // renderer.unbind_fbo();
 
             raycast_shader.bind();
 
+            // model *= glm::translate(glm::mat4(1.f), glm::vec3(0.3f, 0.3f, 0.f));
+
+            // glm::mat4 mvp2 = proj * view * model;
+
             raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
             raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
-            bf_texture.bind(1);
-            face_texture.bind(2);
             transfer_function.bind(0);
+            // bf_texture.bind(1);
+            GLCALL(glActiveTexture(GL_TEXTURE1)); // texture slot 最大 32 个
+            // GLCALL(glBindTexture(GL_TEXTURE_2D, renderer.get_tex_id()));
+            GLCALL(glBindTexture(GL_TEXTURE_2D, tex_id));
+
+            face_texture.bind(2);
+            raycast_shader.set_unifroms1i("u_TransferFunc", 0);
             raycast_shader.set_unifroms1i("u_bfTexture", 1); // texture => slot 0
             raycast_shader.set_unifroms1i("u_FaceTexture", 2);
-            raycast_shader.set_unifroms1i("u_TransferFunc", 0);
 
             renderer.draw(va, ib, raycast_shader, true, GL_BACK);
-            raycast_shader.unbind();
 
-            // GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL));
-            // 为什么 unsigned
+            raycast_shader.unbind();
+            face_texture.unbind();
+
+            // window idle stuff
             glfwSwapBuffers(window);
             glfwPollEvents();
             show_fps(window);

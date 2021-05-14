@@ -29,6 +29,7 @@ public:
         GLCALL(glActiveTexture(GL_TEXTURE0 + slot)); // texture slot 最大 32 个
         GLCALL(glBindTexture(type, renderer_id));
     }
+    inline unsigned int get_id() const { return renderer_id; }
 };
 
 class Texture1D : public Texture
@@ -54,7 +55,7 @@ private:
     int height;
 
 public:
-    Texture2D(const std::string &file_path, const bool empty = false);
+    Texture2D(const std::string &file_path, const bool empty = false, unsigned int w = 0, unsigned int h = 0);
     ~Texture2D();
 
     inline int get_width() const { return width; }

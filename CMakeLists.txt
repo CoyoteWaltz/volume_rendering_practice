@@ -23,6 +23,12 @@ if(GLM_FOUND)
     message(STATUS ">>>>GLM found")
 endif(GLM_FOUND)
 
+# TIFF
+find_package(TIFF REQUIRED)
+if(TIFF_FOUND)
+    message(STATUS ">>>>TIFF found")
+endif(TIFF_FOUND)
+
 set(STATIC_DIR include/)
 # renderer lib
 add_library(renderer STATIC src/custom/renderer.cpp ${STATIC_DIR}/custom/renderer.h)
@@ -46,6 +52,7 @@ add_library(utils STATIC src/utils.cpp ${STATIC_DIR}/utils.h)
 set(LIBS
     glfw
     GLEW::GLEW
+    TIFF::TIFF
     renderer
     vertex_buffer
     index_buffer

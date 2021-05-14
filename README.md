@@ -20,7 +20,7 @@
 │   │   └── vertex_buffer_layout.h
 │   ├── libs.h*(include all header we need)*
 │   ├── utils.h
-│   └── vender
+│   └── vendor
 │       └── stb_image.h
 ├── resource
 │   ├── shaders*(shader files)*
