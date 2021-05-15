@@ -279,7 +279,7 @@ World createWorld()
     
     world.objectCount=4;
     world.objects[0]=createSphere(vec3(0.,0.,-3.),.35,MATERIAL_LAMBERTIAN,0);
-    world.objects[1]=createSphere(vec3(.7,0.,-1.),.15,MATERIAL_METALLIC,1);
+    world.objects[1]=createSphere(vec3(.9,0.,-1.),.15,MATERIAL_METALLIC,1);
     world.objects[2]=createSphere(vec3(-.7,0.,-1.),.15,MATERIAL_DIELECTRIC,2);
     world.objects[3]=createSphere(vec3(0.,-100.5,-1.),100.,MATERIAL_LAMBERTIAN,3);
     
@@ -488,17 +488,17 @@ bool WorldHit(World world,Ray ray,float t_min,float t_max,inout HitRecord rec)
 
 vec3 GetEnvironmentColor(World world,Ray ray)
 {
-    vec3 down_color=vec3(.9333,.6784,.5098);
-    vec3 up_color=vec3(.1725,.6588,.7804);
+    vec3 down_color=vec3(0.6588, 0.9137, 0.4235);
+    vec3 up_color=vec3(0.9529, 0.4431, 0.6706);
     vec3 unit_direction=normalize(ray.direction);// 归一化方向 y
     float t=.5*(unit_direction.y+1.);// 将 y 缩放到 0-1 y 越大看到 up_color 越多 向上看
     
     return(1.-t)*down_color+t*up_color;
     // return (1.-t)*down_color+t*t*t*up_color;
     
-    // float phi=acos(unit_direction.y)/PI;
-    // float theta=(atan(unit_direction.x,unit_direction.z)+(PI/2.))/PI;
-    // return texture(u_envMap,vec2(theta,phi)).xyz;
+    float phi=acos(unit_direction.y)/PI;
+    float theta=(atan(unit_direction.x,unit_direction.z)+(PI/2.))/PI;
+    return texture(u_envMap,vec2(theta,phi)).xyz;
 }
 
 vec3 WorldTrace(World world,Ray ray,int depth){

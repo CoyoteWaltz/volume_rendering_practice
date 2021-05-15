@@ -4,6 +4,8 @@ layout (location = 0) in vec3 aPos;
 
 out vec2 screenCoord;
 
+uniform mat4 u_MVP;
+
 void main()
 {
     gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
@@ -15,9 +17,9 @@ void main()
 #version 330 core
 in vec2 screenCoord;
 
-uniform vec2 screenSize;
-uniform sampler2D randomMap;
-uniform sampler2D envMap;
+// uniform vec2 screenSize;
+// uniform sampler2D randomMap;
+// uniform sampler2D envMap;
 
 out vec4 FragColor;
 

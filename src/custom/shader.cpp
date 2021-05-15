@@ -49,6 +49,7 @@ void Shader::set_unifroms_mat4f(const std::string &name, const glm::mat4 &mat)
 {
     // 4x4 float no need to transfer data 给到一个数组的起点 pointer
     // glm 的 mat 数据格式符合 opengl 的标准
+    // std::cout << "[Shader::set_unifroms_mat4f " << name << " ::" << this->file_path << "]" << std::endl;
     GLCALL(glUniformMatrix4fv(get_uniform_location(name), 1, GL_FALSE, &mat[0][0]));
 }
 
@@ -131,6 +132,8 @@ unsigned int Shader::compile_shader(unsigned int type, const std::string &source
         GLCALL(glGetShaderInfoLog(id, length, &length, log)); // 这个 size 为啥还需要个 pointer ...
         std::cout << "[ERROR::COMPILE::SHADER "
                   << shader_type
+                  << " | source: "
+                  << source
                   << "] >>> "
                   << log
                   << " | log length: "
@@ -166,7 +169,7 @@ unsigned int Shader::create_shader(const std::string &vertex_shader, const std::
         char *log = (char *)alloca(length * sizeof(char)); // alloca 可以 动态的在 stack 上分配内存 cool
         GLCALL(glGetProgramInfoLog(program, length, NULL, log));
         std::cout << "[ERROR::PROGRAM::LINK] >>> " << log
-                  << " | length: " << length << std::endl;
+                  << " | log length: " << length << std::endl;
     }
     else
     {
@@ -181,7 +184,7 @@ unsigned int Shader::create_shader(const std::string &vertex_shader, const std::
         char *log = (char *)alloca(length * sizeof(char)); // alloca 可以 动态的在 stack 上分配内存 cool
         GLCALL(glGetProgramInfoLog(program, length, NULL, log));
         std::cout << "[ERROR::PROGRAM::VALIDATION] >>> " << log
-                  << " | length: " << length << std::endl;
+                  << " | log length: " << length << fragment_shader << std::endl;
     }
     else
     {
