@@ -13,6 +13,7 @@ void main()
 {
     EntryPoint = color;
     gl_Position = u_MVP * vec4(position, 1.0);
+    // gl_Position = vec4(position, 1.0);
     ExitPointCoord = gl_Position;
 }
 
@@ -38,21 +39,38 @@ float StepSize = .003;
 
 void main()
 {
+
+    // gl_FragCoord window relative coord
+    // 0.5, 0.5 -> width-.5, height-.5
+    //-----
+    ivec2 tcoord = ivec2(gl_FragCoord.xy);
+    vec3 exitPoint = texelFetch(u_bfTexture, tcoord, 0).xyz;
+
+
     // 很诡异 先跳过...
-    // vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st/u_ScreenSize).xyz;
+    // vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st / u_ScreenSize).xyz;
+    
 
-    vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0)/2.0;
-    vec3 exitPoint = texture(u_bfTexture, exitFragCoord / 2.).xyz;
-    if (exitPoint == EntryPoint) {
-        fragColor = vec4(1.);
+    // fragColor = vec4(ExitPointCoord.xyz, 1.f);
+    // return;
 
+    // vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0);
+    // vec3 exitPoint = texture(u_bfTexture, exitFragCoord / 2.).xyz;
+    vec3 dx = abs(exitPoint - EntryPoint);
+    if (dx.x < .00001 || dx.y < .00001 || dx.z < .00001) {
+    // if (exitPoint == EntryPoint) {
+        fragColor = vec4(1., 0., 0.,1.);
         discard;
         return;
-
     }
-    fragColor = vec4(0.);
-    return;
-    ///-----
+    // fragColor = vec4(0.);
+    // if (exitPoint == vec3(0.)) {
+        //     fragColor = vec4(1.);
+        //     return;
+    // }
+    // fragColor = vec4(exitPoint, 1.);
+    // return;
+    // ///-----
 
     vec3 dir=exitPoint-EntryPoint;
     float len=length(dir);// the length from front to back is calculated and used to terminate the ray
@@ -77,8 +95,8 @@ void main()
         intensity=texture(u_FaceTexture,voxelCoord).x;
         // 查找传输函数中映射后的值
         // 依赖性纹理读取
-        // colorSample=texture(u_TransferFunc,intensity);
-        colorSample=vec4(intensity);
+        colorSample=texture(u_TransferFunc,intensity);
+        // colorSample=vec4(intensity);
         // modulate the value of colorSample.a
         // front-to-back integration
         if(colorSample.a>0.){

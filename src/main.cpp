@@ -12,146 +12,6 @@
 #define Y_axis 1
 #define Z_axis 2
 
-void test_load_tiff()
-{
-
-    const char *filename = "../resource/textures/neuro.tif";
-    TIFF *tif = TIFFOpen(filename, "r");
-    if (!tif)
-    {
-        std::cout << "open file failed! >>> " << filename << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    uint32_t width, height;
-    uint32_t tileWidth, tileLength;
-    uint32_t x, y;
-    uint32_t type;
-    // tdata_t buf;
-
-    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
-    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tileWidth);
-    TIFFGetField(tif, TIFFTAG_TILELENGTH, &tileLength);
-    TIFFGetField(tif, TIFFTAG_DATATYPE, &type);
-    std::cout << "TIFFTAG_IMAGEWIDTH " << width
-              << "TIFFTAG_IMAGELENGTH " << height
-              << std::endl;
-    std::cout << "type " << type << std::endl;
-
-    // buf = _TIFFmalloc(TIFFTileSize(tif));
-    // for (y = 0; y < imagelength; y += tilelength)
-    //     for (x = 0; x < imagewidth; x += tilewidth)
-    //         tiffreadtile(tif, buf, x, y, 0);
-    // _TIFFfree(buf);
-    // TIFFClose(tif);
-    // uint8 *buffer = (uint8 *)malloc(width * height * sizeof(uint32));
-    // TIFFReadRawStrip(tif, 0, buffer, width * height);
-    int dircount = 0;
-    uint32_t depth = 512;
-    uint32_t total = width * height * depth;
-    unsigned char *buffer = new unsigned char[total];
-    do
-    {
-        dircount++;
-        // if (dircount <= 257)
-        // {
-        //     continue;
-        // }
-
-        uint32_t pixels = width * height;
-        uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
-        // 4279374354
-
-        uint32_t *scan_line = nullptr;
-        if (raster != NULL)
-        {
-            if (TIFFReadRGBAImage(tif, width, height, raster, 0))
-            {
-                std::cout << "read success " << dircount << std::endl;
-                for (size_t i = 0; i < pixels; i++)
-                {
-                    // std::cout << "data: " << i << " " << raster[i] << std::endl;
-                    uint32_t value = raster[i];
-                    // int high = value >> 24;
-                    int low = (unsigned char)(value);
-
-                    buffer[(dircount - 1) * pixels + i] = low;
-                    // std::cout << "buffer------: " << (dircount - 1) * pixels + i << " " << int(buffer[(dircount - 1) * pixels + i]) << " " << value << std::endl;
-
-                    // if (value == 0 || low != 255 || high < 30)
-                    // {
-                    //     continue;
-                    // }
-                    // std::string binary = std::bitset<32>(value).to_string(); //to binary
-
-                    // std::cout << "slice\t" << dircount
-                    //           << "\t" << value
-                    //           << "\tbinary\t" << binary
-                    //           << "\thigh8\t"
-                    //           << "\t" << binary.substr(0, 8)
-                    //           << "\t" << high
-                    //           << "\tlow8\t"
-                    //           << "\t" << binary.substr(24, 32)
-                    //           << "\t" << low
-                    //           << std::endl;
-                }
-                // memcpy(buffer + pixels * (dircount - 1), raster, pixels * sizeof(unsigned char));
-            }
-            _TIFFfree(raster);
-
-            // break;
-            // for (size_t row = 0; row < height; row++)
-            // {
-            //     scan_line = (uint32_t *)_TIFFmalloc(width * (sizeof(uint32_t)));
-            //     if (TIFFReadScanline(tif, scan_line, row, 0) == 1)
-            //     {
-            //         for (size_t i = 0; i < width; i++)
-            //         {
-            //             uint32_t value = scan_line[i];
-            //             int high = value >> 24;
-            //             int low = (unsigned char)(value);
-
-            //             if (value == 0 || low < 30 || high < 30)
-            //             {
-            //                 continue;
-            //             }
-            //             std::string binary = std::bitset<32>(value).to_string(); //to binary
-
-            //             std::cout << "slice\t" << dircount
-            //                       << "\trow\t" << row
-            //                       << "\tcol\t" << i
-            //                       << "\t" << value
-            //                       << "\tbinary\t" << binary
-            //                       << "\tlow8\t"
-            //                       << "\t" << binary.substr(0, 8)
-            //                       << "\t" << low
-            //                       << "\thigh8\t"
-            //                       << "\t" << binary.substr(24, 32)
-            //                       << "\t" << high
-            //                       << std::endl;
-
-            //             // std::cout << "----" << binary << std::endl;
-            //             // return;
-            //         }
-            //         // _TIFFmemcpy()
-            //     }
-            //     _TIFFfree(scan_line);
-            //     scan_line = nullptr;
-            // }
-        }
-        // break;
-    } while (TIFFReadDirectory(tif)); // go next slice
-    // printf("%d directories in %s\n", dircount, argv[1]);
-    TIFFClose(tif);
-    for (size_t i = 512 * 512 * 500; i < total; i++)
-    {
-        std::cout << "id " << i << " " << int(buffer[i]) << std::endl;
-    }
-
-    delete[] buffer;
-    std::cout << "count " << dircount << std::endl;
-}
-
 double lastTime = glfwGetTime();
 int frames = 0;
 
@@ -183,7 +43,7 @@ void padding_viewport(const int width, const int height, const int padding);
 
 void window_resize_callback(GLFWwindow *window, const int width, const int height)
 {
-    std::cout << "resizeing!" << std::endl;
+    std::cout << "resizeing to " << width << "*" << height << std::endl;
     glViewport(0, 0, width, height);
     // padding_viewport(width, height, 10);
 }
@@ -286,6 +146,48 @@ void show_fps(GLFWwindow *window)
     }
 }
 
+glm::mat4 getMVP(int width, int height)
+{
+
+    // 来个投影矩阵 正交变换矩阵 6 个参数 left right bottom top narZ farZ 关于 viewport plane 的
+    // 给定这些参数 就能创建一个 正交矩阵 game101 C4 学过哦
+    glm::mat4 proj = glm::mat4(1.f);
+    glm::mat4 view = glm::mat4(1.f);
+
+    //  transform the box
+    // proj = glm::perspective(.9f, (float)width / height, .1f, 200.f);
+    // fovy aspect near far
+    proj = glm::perspective(glm::radians(45.f), float(width) / float(height), 0.1f, 400.f);
+
+    // view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
+    //                    glm::vec3(0.0f, 0.0f, 0.0f),
+    //                    glm::vec3(0.0f, 1.f, 0.0f));
+    // glm::quat q(1.f, 2.f, 3);  // w x y z!!
+    view = glm::lookAt(g_eye_pos,
+                       glm::vec3(0.0f, 0.0f, 0.0f),
+                       glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 model = glm::mat4(1.f);
+    // y 轴 旋转
+    model *= glm::rotate(glm::mat4(1.f), glm::radians(float(g_angle_horizontal)), glm::vec3(0.0f, 1.0f, 0.0f));
+    // x 轴 旋转
+    model *= glm::rotate(glm::mat4(1.f), glm::radians(float(g_angle_vertical)), glm::vec3(1.0f, 0.f, 0.0f));
+    // to make the "head256.raw" i.e. the volume data stand up.
+    model *= glm::rotate(glm::mat4(1.f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
+    // model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
+    model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
+    // notice the multiplication order: reverse order of transform
+
+    // proj = glm::ortho(-200.f, 200.f, -150.f, 150.f, -1.f, 1.f);
+    // view 矩阵 移动 camera 实际上是对物体做 reverse 的移动
+    // camera 向左 50 => 物体向右 50 对一个 I 做 translate 变换
+    // view = glm::translate(glm::mat4(1.f), glm::vec3(50.f, 0.f, 0.f));
+    // model = glm::translate(glm::mat4(1.f), glm::vec3(-80.f, 20.f, 0.f));
+    // glm::mat4 model = glm::rotate(glm::mat4(1.f), 0.22f, glm::vec3(1, 1, 0));
+    glm::mat4 mvp = proj * view * model;
+
+    return mvp;
+}
+
 int main(int argc, char **argv)
 {
     // test_load_tiff();
@@ -303,8 +205,8 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // APPLE
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 开启 core profile
 
-    const unsigned int width = 800;
-    const unsigned int height = 400;
+    unsigned int width = 800;
+    unsigned int height = 400;
 
     // Actually create the window
     GLFWwindow *window = glfwCreateWindow(width, height, "OpenGL window", NULL, NULL);
@@ -329,7 +231,7 @@ int main(int argc, char **argv)
     const std::string shaders_path = "../resource/shaders/";
 
     // padding_viewport(width, height);
-    glViewport(0, 0, width, height);
+    // glViewport(0, 0, width, height);
 
     // start GLEW extension handler
     glewExperimental = GL_TRUE;
@@ -362,11 +264,20 @@ int main(int argc, char **argv)
         1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
         1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
         1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+    // float vertices[48] = {
+    //     -.5f, -.5f, -.5f, -.5f, -.5f, -.5f,
+    //     -.5f, -.5f, .5f, -.5f, -.5f, .5f,
+    //     -.5f, .5f, -.5f, -.5f, .5f, -.5f,
+    //     -.5f, .5f, .5f, -.5f, .5f, .5f,
+    //     .5f, -.5f, -.5f, .5f, -.5f, -.5f,
+    //     .5f, -.5f, .5f, .5f, -.5f, .5f,
+    //     .5f, .5f, -.5f, .5f, .5f, -.5f,
+    //     .5f, .5f, .5f, .5f, .5f, .5f};
     // draw the six faces of the boundbox by drawwing triangles
     // draw it contra-clockwise
     // front: 1 5 7 3
     // back: 0 2 6 4
-    // left��0 1 3 2
+    // left: 0 1 3 2
     // right:7 5 4 6
     // up: 2 3 7 6
     // down: 1 0 4 5
@@ -384,6 +295,27 @@ int main(int argc, char **argv)
         7, 6, 2,
         1, 0, 4,
         4, 5, 1};
+
+    float vertices2[] = {
+        //World					//Color
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.0f,  //v0
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,   //v1
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f,    //v2
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,   //v3
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, //v4
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f,  //v5
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1.0f,   //v6
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 1.0f,  //v7
+    };
+
+    unsigned int indices2[36] = {
+        0, 1, 2, 0, 2, 3, //front
+        4, 7, 6, 4, 6, 5, //back
+        4, 0, 3, 4, 3, 7, //left
+        1, 5, 6, 1, 6, 2, //right
+        3, 2, 6, 3, 6, 7, //top
+        4, 5, 1, 4, 1, 0, //bottom
+    };
 
     {
         // gl 如何 blend 获取 GL_SRC_ALPHA 在这之上的 alpha' = 1 - alpha
@@ -405,45 +337,11 @@ int main(int argc, char **argv)
         // layout.push<float>(2); // layout 3D texture coord => 2
         va.add_buffer(vb, layout);
 
-        // 来个投影矩阵 正交变换矩阵 6 个参数 left right bottom top narZ farZ 关于 viewport plane 的
-        // 给定这些参数 就能创建一个 正交矩阵 game101 C4 学过哦
-        glm::mat4 proj = glm::mat4(1.f);
-        glm::mat4 view = glm::mat4(1.f);
-
-        //  transform the box
-        // proj = glm::perspective(.9f, (float)width / height, .1f, 200.f);
-        // fovy aspect near far
-        proj = glm::perspective(.9f, (float)width / height, 0.1f, 400.f);
-
-        // view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
-        //                    glm::vec3(0.0f, 0.0f, 0.0f),
-        //                    glm::vec3(0.0f, 1.f, 0.0f));
-        // glm::quat q(1.f, 2.f, 3);  // w x y z!!
-        view = glm::lookAt(g_eye_pos,
-                           glm::vec3(0.0f, 0.0f, 0.0f),
-                           glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 model = glm::mat4(1.f);
-        // y 轴 旋转
-        model *= glm::rotate(glm::mat4(1.f), glm::radians(float(g_angle_horizontal)), glm::vec3(0.0f, 1.0f, 0.0f));
-        // x 轴 旋转
-        model *= glm::rotate(glm::mat4(1.f), glm::radians(float(g_angle_vertical)), glm::vec3(1.0f, 0.f, 0.0f));
-        // to make the "head256.raw" i.e. the volume data stand up.
-        // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
-        // model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
-        model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
-        // notice the multiplication order: reverse order of transform
-
-        // proj = glm::ortho(-200.f, 200.f, -150.f, 150.f, -1.f, 1.f);
-        // view 矩阵 移动 camera 实际上是对物体做 reverse 的移动
-        // camera 向左 50 => 物体向右 50 对一个 I 做 translate 变换
-        // view = glm::translate(glm::mat4(1.f), glm::vec3(50.f, 0.f, 0.f));
-        // model = glm::translate(glm::mat4(1.f), glm::vec3(-80.f, 20.f, 0.f));
-        // glm::mat4 model = glm::rotate(glm::mat4(1.f), 0.22f, glm::vec3(1, 1, 0));
-        glm::mat4 mvp = proj * view * model;
-
+        glm::mat4 mvp = getMVP(width, height);
         Shader face_shader(shaders_path + "face.shader");
         Shader raycast_shader(shaders_path + "raycast.shader");
         face_shader.bind();
+
         face_shader.set_unifroms_mat4f("u_MVP", mvp);
         raycast_shader.bind();
         raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
@@ -451,7 +349,7 @@ int main(int argc, char **argv)
 
         Texture1D transfer_function("../resource/textures/tff.dat");
         // Texture2D bf_texture("../resource/textures/ttt.png", true);
-        Texture3D face_texture(false);
+        Texture3D face_texture(!false);
 
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
@@ -460,67 +358,59 @@ int main(int argc, char **argv)
         vb.unbind();
         face_shader.unbind();
         raycast_shader.unbind();
+        // glViewport(0, 0, width, height);
 
-        // unsigned int backface_id = bf_texture.get_id();
-
-        Renderer renderer(width, height, 1);
-
+        Renderer renderer;
         FrameBuffer frame(width, height);
 
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         while (!glfwWindowShouldClose(window))
         {
-            // GLCALL(glBindTexture(GL_TEXTURE_2D, 0));
+            // glViewport(100, 0, width, height);
+            glViewport(0, 0, width * 2, height * 2);
 
+            // GLCALL(glDisable(GL_DEPTH_TEST));
+
+            handle_input(window);
+            glm::mat4 mvp = getMVP(width, height);
+
+            /************************* draw back face to buffer */
             face_shader.bind();
             // 要先 bind 才能 set uniform
-            handle_input(window);
             renderer.clear();
             frame.bind();
 
-            // renderer.bind_fbo();
-            // glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_id); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
-
-            view = glm::mat4(1.f);
-            view = glm::lookAt(g_eye_pos,
-                               glm::vec3(0.0f, 0.0f, 0.0f),
-                               glm::vec3(0.0f, 1.0f, 0.0f));
-            model = glm::mat4(1.f);
-            // y 轴 旋转
-            model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_horizontal), glm::vec3(0.0f, 1.0f, 0.0f));
-            // x 轴 旋转
-            model *= glm::rotate(glm::mat4(1.f), angle2radian(g_angle_vertical), glm::vec3(1.0f, 0.f, 0.0f));
-            // to make the "head256.raw" i.e. the volume data stand up.
-            // model *= glm::rotate(glm::mat4(1.f), angle2radian(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // x axis 90 deg
-            // model *= glm::rotate(glm::mat4(1.f), angle2radian(45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // z axis 45 deg
-            model *= glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
-            glm::mat4 mvp = proj * view * model;
             // glm::mat4 mvp2 = glm::mat4(1.f) * proj * glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
             face_shader.set_unifroms_mat4f("u_MVP", mvp);
             renderer.draw(va, ib, face_shader, true, GL_FRONT);
+            frame.unbind();
             face_shader.unbind();
 
-            frame.unbind();
+            /************************* draw cube */
+            // GLCALL(glEnable(GL_DEPTH_TEST));
+
+            // GLCALL(glEnable(GL_BLEND));
+            // GLCALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 
             raycast_shader.bind();
-
-            // model *= glm::translate(glm::mat4(1.f), glm::vec3(0.3f, 0.3f, 0.f));
-
-            // glm::mat4 mvp2 = proj * view * model;
+            // glViewport(0, 0, width, height);
+            renderer.clear();
 
             raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
             raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
+
+            // set texture uniforms
             transfer_function.bind(0);
             frame.bind_color_buffer_to_texture(1);
-
             // bf_texture.bind(1);
-
             face_texture.bind(2);
             raycast_shader.set_unifroms1i("u_TransferFunc", 0);
             raycast_shader.set_unifroms1i("u_bfTexture", 1); // texture => slot 0
             raycast_shader.set_unifroms1i("u_FaceTexture", 2);
 
             renderer.draw(va, ib, raycast_shader, true, GL_BACK);
+
+            // glDisable(GL_BLEND);
 
             raycast_shader.unbind();
             face_texture.unbind();
@@ -530,7 +420,6 @@ int main(int argc, char **argv)
             glfwPollEvents();
             show_fps(window);
         }
-        // glDebugMessageCallback()
         // close GL context and any other GLFW resources
         face_shader.unbind();
         raycast_shader.unbind();

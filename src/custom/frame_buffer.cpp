@@ -12,7 +12,8 @@ FrameBuffer::FrameBuffer(const unsigned int width, const unsigned int height)
     GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0));
 
     // internal type GL_RGBA16F 和我们在 glsl 中如何存的 有关
-    GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0,
+    // 不过这里的 size 放大了 2 倍 说实话我也不知道为什么 tmd 就 * 2 没问题了
+    GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width * 2, height * 2, 0,
                         GL_RGBA, GL_FLOAT, NULL));
 
     std::cout << "Init aaa renderer!" << std::endl;
@@ -28,12 +29,10 @@ FrameBuffer::FrameBuffer(const unsigned int width, const unsigned int height)
     GLCALL(glDrawBuffer(GL_COLOR_ATTACHMENT0));
 
     // 渲染缓冲区
+    // 绑定一个 depth buffer
     GLCALL(glGenRenderbuffers(1, &depth_buffer_id));
     GLCALL(glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_id));
-    GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height));
-
-    std::cout << "----ssss " << color_buffer_id << std::endl;
-    // 绑定一个 depth buffer
+    GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height));
     GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer_id));
 
     GLCALL(unsigned int status = glCheckFramebufferStatus(GL_FRAMEBUFFER));
@@ -80,7 +79,7 @@ FrameBuffer::FrameBuffer(const unsigned int width, const unsigned int height)
         exit(EXIT_FAILURE);
     }
 
-    GLCALL(glEnable(GL_DEPTH_TEST));
+    unbind();
 }
 FrameBuffer::~FrameBuffer()
 {
@@ -91,6 +90,7 @@ FrameBuffer::~FrameBuffer()
 void FrameBuffer::bind() const
 {
     GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, renderer_id)); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
+    // GLCALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderer_id)); // 这里绑定 framebuffer 把第一个 draw 的数据画到 fbo 的 texture
 }
 void FrameBuffer::unbind() const
 {
