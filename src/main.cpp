@@ -2,8 +2,6 @@
  * new opengl toturial demo
 */
 #include "include/libs.h"
-#include "tiffio.h"
-#include "tiffio.hxx"
 #include <bitset>
 
 #include <string>
@@ -15,8 +13,10 @@
 double lastTime = glfwGetTime();
 int frames = 0;
 
-int g_angle_horizontal = 0;
-int g_angle_vertical = 0;
+int g_angle_horizontal = 213;
+int g_angle_vertical = -180;
+
+bool update_mvp = false;
 
 glm::vec3 g_eye_pos(0.0f, 0.0f, 2.0f); // z 2.0 init
 
@@ -56,6 +56,8 @@ void padding_viewport(const int width, const int height, const int padding = 10)
 void handle_input(GLFWwindow *window)
 {
     int rotate_delta_deg = 3;
+    update_mvp = true;
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
@@ -69,7 +71,6 @@ void handle_input(GLFWwindow *window)
         g_angle_vertical = 0;
         g_eye_pos = glm::vec3(0.0f, 0.0f, 2.0f); // z 2.0 init
     }
-
     else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
     {
         std::cout << "on key left press!" << std::endl;
@@ -116,6 +117,10 @@ void handle_input(GLFWwindow *window)
         std::cout << "go forward along x!" << std::endl;
         move_eye(.05, X_axis);
     }
+    else
+    {
+        update_mvp = false;
+    }
 }
 
 float angle2radian(const float &ang)
@@ -159,9 +164,6 @@ glm::mat4 getMVP(int width, int height)
     // fovy aspect near far
     proj = glm::perspective(glm::radians(45.f), float(width) / float(height), 0.1f, 400.f);
 
-    // view = glm::lookAt(glm::vec3(1.0f, 1.0f, 1.0f),
-    //                    glm::vec3(0.0f, 0.0f, 0.0f),
-    //                    glm::vec3(0.0f, 1.f, 0.0f));
     // glm::quat q(1.f, 2.f, 3);  // w x y z!!
     view = glm::lookAt(g_eye_pos,
                        glm::vec3(0.0f, 0.0f, 0.0f),
@@ -190,8 +192,21 @@ glm::mat4 getMVP(int width, int height)
 
 int main(int argc, char **argv)
 {
-    // test_load_tiff();
-    // return 1;
+    bool render_face = true;
+    if (argc >= 2)
+    {
+        // for (size_t i = 0; i < argc; i++)
+        // {
+        //     std::cout << "III---" << i << " > " << argv[i] << std::endl;
+        // }
+        std::string face_str(argv[1]);
+        if (face_str.compare("noface") == 0)
+        {
+            std::cout << "III---noface" << std::endl;
+            render_face = false;
+        }
+    }
+
     // start GL context and O/S window using the GLFW helper library
     if (!glfwInit())
     {
@@ -205,16 +220,16 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // APPLE
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 开启 core profile
 
-    unsigned int width = 800;
-    unsigned int height = 400;
+    unsigned int width = 512;
+    unsigned int height = 512;
 
     // Actually create the window
-    GLFWwindow *window = glfwCreateWindow(width, height, "OpenGL window", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(width, height, "volume rendering", NULL, NULL);
     if (!window)
     {
         std::cerr << "ERROR: could not open window with GLFW3" << std::endl;
         glfwTerminate();
-        return 1;
+        exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, window_resize_callback);
@@ -225,7 +240,7 @@ int main(int argc, char **argv)
     // This is sometimes called vertical synchronization,
     // vertical retrace synchronization or just vsync.
     // 翻译一下
-    glfwSwapInterval(1);
+    // glfwSwapInterval(1);
 
     const std::string textures_path = "../resource/textures/";
     const std::string shaders_path = "../resource/shaders/";
@@ -264,15 +279,7 @@ int main(int argc, char **argv)
         1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
         1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
         1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    // float vertices[48] = {
-    //     -.5f, -.5f, -.5f, -.5f, -.5f, -.5f,
-    //     -.5f, -.5f, .5f, -.5f, -.5f, .5f,
-    //     -.5f, .5f, -.5f, -.5f, .5f, -.5f,
-    //     -.5f, .5f, .5f, -.5f, .5f, .5f,
-    //     .5f, -.5f, -.5f, .5f, -.5f, -.5f,
-    //     .5f, -.5f, .5f, .5f, -.5f, .5f,
-    //     .5f, .5f, -.5f, .5f, .5f, -.5f,
-    //     .5f, .5f, .5f, .5f, .5f, .5f};
+
     // draw the six faces of the boundbox by drawwing triangles
     // draw it contra-clockwise
     // front: 1 5 7 3
@@ -349,7 +356,7 @@ int main(int argc, char **argv)
 
         Texture1D transfer_function("../resource/textures/tff.dat");
         // Texture2D bf_texture("../resource/textures/ttt.png", true);
-        Texture3D face_texture(!false);
+        Texture3D face_texture(render_face);
 
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
@@ -369,10 +376,13 @@ int main(int argc, char **argv)
             // glViewport(100, 0, width, height);
             glViewport(0, 0, width * 2, height * 2);
 
-            // GLCALL(glDisable(GL_DEPTH_TEST));
-
             handle_input(window);
-            glm::mat4 mvp = getMVP(width, height);
+            if (update_mvp)
+            {
+                std::cout << "new mvp" << std::endl;
+                mvp = getMVP(width, height);
+                update_mvp = false;
+            }
 
             /************************* draw back face to buffer */
             face_shader.bind();
@@ -380,20 +390,13 @@ int main(int argc, char **argv)
             renderer.clear();
             frame.bind();
 
-            // glm::mat4 mvp2 = glm::mat4(1.f) * proj * glm::translate(glm::mat4(1.f), glm::vec3(-0.5f, -0.5f, -0.5f));
             face_shader.set_unifroms_mat4f("u_MVP", mvp);
-            renderer.draw(va, ib, face_shader, true, GL_FRONT);
+            renderer.draw(va, ib, face_shader, true, GL_FRONT, false);
             frame.unbind();
             face_shader.unbind();
 
-            /************************* draw cube */
-            // GLCALL(glEnable(GL_DEPTH_TEST));
-
-            // GLCALL(glEnable(GL_BLEND));
-            // GLCALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
-
+            /************************* draw cube for volume */
             raycast_shader.bind();
-            // glViewport(0, 0, width, height);
             renderer.clear();
 
             raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
@@ -408,12 +411,12 @@ int main(int argc, char **argv)
             raycast_shader.set_unifroms1i("u_bfTexture", 1); // texture => slot 0
             raycast_shader.set_unifroms1i("u_FaceTexture", 2);
 
-            renderer.draw(va, ib, raycast_shader, true, GL_BACK);
-
-            // glDisable(GL_BLEND);
+            renderer.draw(va, ib, raycast_shader, true, GL_BACK, true);
 
             raycast_shader.unbind();
             face_texture.unbind();
+
+            /************************* end drawing  */
 
             // window idle stuff
             glfwSwapBuffers(window);

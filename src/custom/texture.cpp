@@ -158,35 +158,35 @@ Texture3D::Texture3D(const bool face)
             std::cout << "open file failed! >>> " << filename << std::endl;
             exit(EXIT_FAILURE);
         }
-        uint32_t width, height;
+        // uint32_t width, height;
         uint32_t tileWidth, tileLength;
         uint32_t x, y;
         // uint32_t type;
 
-        TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+        TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
+        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
         TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tileWidth);
         TIFFGetField(tif, TIFFTAG_TILELENGTH, &tileLength);
         // TIFFGetField(tif, TIFFTAG_DATATYPE, &type);
         std::cout << "TIFFTAG_IMAGEWIDTH " << width
-                  << "TIFFTAG_IMAGELENGTH " << height
+                  << " TIFFTAG_IMAGELENGTH " << height
                   << std::endl;
         // std::cout << "type " << type << std::endl;
 
         int dircount = 0;
-        uint32_t depth = 512;
-        uint32_t total = width * height * depth;
+        unsigned int depth = 512;
+        uint32_t total = w * h * depth;
         local_buffer = new unsigned char[total];
         do
         {
             dircount++;
-            uint32_t pixels = width * height;
+            uint32_t pixels = w * h;
             uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
 
             uint32_t *scan_line = nullptr;
             if (raster != NULL)
             {
-                if (TIFFReadRGBAImage(tif, width, height, raster, 0))
+                if (TIFFReadRGBAImage(tif, w, h, raster, 0))
                 {
                     // std::cout << "read success " << dircount << std::endl;
                     for (size_t i = 0; i < pixels; i++)

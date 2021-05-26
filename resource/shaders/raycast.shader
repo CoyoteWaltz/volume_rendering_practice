@@ -4,17 +4,17 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 color; // 其实这个 不要也可以 目前看完全用不到
 
-out vec3 EntryPoint;
-out vec4 ExitPointCoord;
+out vec3 v_EntryPoint;
+// out vec4 ExitPointCoord;
 
 uniform mat4 u_MVP;
 
 void main()
 {
-    EntryPoint = color;
+    v_EntryPoint = color;
     gl_Position = u_MVP * vec4(position, 1.0);
     // gl_Position = vec4(position, 1.0);
-    ExitPointCoord = gl_Position;
+    // ExitPointCoord = gl_Position;
 }
 
 
@@ -32,10 +32,10 @@ uniform sampler2D u_bfTexture;
 // uniform sampler2D u_Texture;
 uniform sampler3D u_FaceTexture;
 
-in vec3 EntryPoint;
-in vec4 ExitPointCoord;
+in vec3 v_EntryPoint;
+// in vec4 ExitPointCoord;
 
-float StepSize = .003;
+#define StepSize .005
 
 void main()
 {
@@ -44,50 +44,35 @@ void main()
     // 0.5, 0.5 -> width-.5, height-.5
     //-----
     ivec2 tcoord = ivec2(gl_FragCoord.xy);
-    vec3 exitPoint = texelFetch(u_bfTexture, tcoord, 0).xyz;
+    vec3 exitPoint = texelFetch(u_bfTexture, tcoord, 0).xyz;  // fetch texture by uv
 
+    vec3 dir=exitPoint-v_EntryPoint;
 
-    // 很诡异 先跳过...
-    // vec3 exitPoint=texture(u_bfTexture,gl_FragCoord.st / u_ScreenSize).xyz;
-    
-
-    // fragColor = vec4(ExitPointCoord.xyz, 1.f);
-    // return;
-
-    // vec2 exitFragCoord = (ExitPointCoord.xy / ExitPointCoord.w + 1.0);
-    // vec3 exitPoint = texture(u_bfTexture, exitFragCoord / 2.).xyz;
-    vec3 dx = abs(exitPoint - EntryPoint);
-    if (dx.x < .00001 || dx.y < .00001 || dx.z < .00001) {
-    // if (exitPoint == EntryPoint) {
-        fragColor = vec4(1., 0., 0.,1.);
-        discard;
-        return;
-    }
-    // fragColor = vec4(0.);
-    // if (exitPoint == vec3(0.)) {
-        //     fragColor = vec4(1.);
-        //     return;
+    vec3 dx = abs(dir);
+    // float eps = .00001f;
+    // if (dx.x < eps || dx.y < eps || dx.z < eps) {
+    //     fragColor = vec4(1., 0., 0.,1.);
+    //     discard;
+    //     // return;
     // }
-    // fragColor = vec4(exitPoint, 1.);
-    // return;
-    // ///-----
 
-    vec3 dir=exitPoint-EntryPoint;
+    // fragColor = vec4(normalize(dir), 1.f);
+    // return;
     float len=length(dir);// the length from front to back is calculated and used to terminate the ray
     vec3 deltaDir=normalize(dir)*StepSize;
     float deltaDirLen=length(deltaDir);
-    vec3 voxelCoord=EntryPoint;
-    // x 方向少了一半...
-    // vec3 voxelCoord=vec3(EntryPoint.x / 2., EntryPoint.y, EntryPoint.z);
+    vec3 voxelCoord=v_EntryPoint;
+    // vec3 voxelCoord=vec3(v_EntryPoint.x / 2., v_EntryPoint.y, v_EntryPoint.z);
     vec4 colorAcum=vec4(0.);// The dest color
-    float alphaAcum=0.;// The  dest alpha for blending
+    float alphaAcum=0.;// The dest alpha for blending
     /* 定义颜色查找的坐标 */
     float intensity;
-    float lengthAcum=0.;
+    float forwardLen=0.;
     vec4 colorSample;// The src color
     float alphaSample;// The src alpha
     // backgroundColor
     vec4 bgColor=vec4(1.,1.,1.,0.);
+    // vec4 bgColor=vec4(0.);
     
     for(int i=0;i<1600;i++)
     {
@@ -97,29 +82,39 @@ void main()
         // 依赖性纹理读取
         colorSample=texture(u_TransferFunc,intensity);
         // colorSample=vec4(intensity);
+        // if (intensity < 0.) {
+        //     colorAcum=vec4(1., 0, 0, 1.);
+        //     break;
+        // }
         // modulate the value of colorSample.a
         // front-to-back integration
         if(colorSample.a>0.){
             // accomodate for variable sampling rates (base interval defined by mod_compositing.frag)
-            colorSample.a=1.-pow(1.-colorSample.a,StepSize*200.f);// 放大了好多的 alpha
-            colorAcum.rgb+=(1.-colorAcum.a)*colorSample.rgb*colorSample.a;
-            colorAcum.a+=(1.-colorAcum.a)*colorSample.a;
+            float colorAcumOpacity = 1.-colorAcum.a;
+            // colorSample.a=1.-pow(1.-colorSample.a,deltaDirLen / StepSize);// 放大了好多的 alpha optical correction
+            colorSample.a=1.-pow(1.-colorSample.a,StepSize * 200.f);// 放大了好多的 alpha optical correction
+            colorAcum.rgb+=colorAcumOpacity * colorSample.rgb * colorSample.a;
+            colorAcum.a+=colorAcumOpacity * colorSample.a;
         }
         voxelCoord+=deltaDir;
-        lengthAcum+=deltaDirLen;
+        forwardLen+=deltaDirLen;
         
         // terminate if opacity > 1 or the ray is outside the volume
-        if(lengthAcum>=len){
-            colorAcum.rgb=colorAcum.rgb*colorAcum.a+(1-colorAcum.a)*bgColor.rgb;
+        if(forwardLen>=len){
+            colorAcum.rgb=colorAcum.rgb*colorAcum.a + (1-colorAcum.a)*bgColor.rgb;
+            // colorAcum = vec4(1.);
+
             break;
         }
-        else if(colorAcum.a>.99)
+        if(colorAcum.a>.93)
         {
             colorAcum.a=1.;
+            // colorAcum = vec4(1.);
             break;
         }
     }
     fragColor=colorAcum;
-    // fragColor = vec4(EntryPoint, 1.0);
+    // fragColor = vec4(v_EntryPoint, 1.0);
     // fragColor = vec4(exitPoint, 1.0);
+    // fragColor = vec4(dir, 1.0);
 }

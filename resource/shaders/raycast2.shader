@@ -73,12 +73,12 @@ void main(void)
         
         //Sample in the scalar field and the transfer function
         float scalar = texture(u_FaceTexture, trans).x;
-        // vec4 samp = texture(u_TransferFunc, scalar).rgba;
-        vec4 samp = vec4(scalar);
+        vec4 samp = texture(u_TransferFunc, scalar).rgba;
+        // vec4 samp = vec4(scalar);
 
         //Calculating alpa
-        // samp.a = 1.0f - exp(-0.5 * samp.a);
-        samp.a=1.-pow(1.-samp.a,h*200.f);// 放大了好多的 alpha
+        samp.a = 1.0f - exp(-0.5 * samp.a);
+        // samp.a=1.-pow(1.-samp.a,h*200.f);// 放大了好多的 alpha
 
 
         //Acumulating color and alpha using under operator 

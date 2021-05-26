@@ -13,7 +13,8 @@ FrameBuffer::FrameBuffer(const unsigned int width, const unsigned int height)
 
     // internal type GL_RGBA16F 和我们在 glsl 中如何存的 有关
     // 不过这里的 size 放大了 2 倍 说实话我也不知道为什么 tmd 就 * 2 没问题了
-    GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width * 2, height * 2, 0,
+    int scale = 2;
+    GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width * scale, height * scale, 0,
                         GL_RGBA, GL_FLOAT, NULL));
 
     std::cout << "Init aaa renderer!" << std::endl;

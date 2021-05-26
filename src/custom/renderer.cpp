@@ -6,9 +6,15 @@ Renderer::Renderer()
 }
 
 void Renderer::draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader,
-                    const bool gl_cull_face, const unsigned int gl_faces) const
+                    const bool gl_cull_face, const unsigned int gl_faces,
+                    const bool enable_depth) const
 {
-    // GLCALL(glEnable(GL_DEPTH_TEST));
+    // GLCALL(glEnable(GL_BLEND));
+    // GLCALL(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
+    if (enable_depth)
+    {
+        GLCALL(glEnable(GL_DEPTH_TEST));
+    }
 
     if (gl_cull_face)
     {
@@ -17,13 +23,21 @@ void Renderer::draw(const VertexArray &va, const IndexBuffer &ib, const Shader &
         GLCALL(glCullFace(gl_faces));
         GLCALL(glFrontFace(GL_CCW));
     }
+    // bind vertex array buffer and index buffer
     va.bind();
     ib.bind();
     shader.bind();
     GLCALL(glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, nullptr));
+
+    // glDisable(GL_BLEND);
+
     if (gl_cull_face)
     {
         GLCALL(glDisable(GL_CULL_FACE));
+    }
+    if (enable_depth)
+    {
+        GLCALL(glDisable(GL_DEPTH_TEST));
     }
 }
 

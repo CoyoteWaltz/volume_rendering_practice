@@ -6,11 +6,11 @@ layout(location = 1) in vec3 color; // 其实这个 不要也可以 目前看完
 
 uniform mat4 u_MVP;
 
-out vec3 v_Color;  // 输出一个 varing 作为 color 给 frag
+out vec3 v_Position;  // 输出一个 varing 作为 color 给 frag
 
 void main()
 {
-    v_Color = color;
+    v_Position = color;
     gl_Position = u_MVP * vec4(position, 1.0);
 }
 
@@ -19,12 +19,11 @@ void main()
 #shader fragment
 #version 410 core
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec3 fragColor;  // out vec3 for color frame buffer
 
-in vec3 v_Color;
+in vec3 v_Position;
 
 void main()
 {
-    // fragColor = vec4(v_Color, 1.);
-    fragColor = v_Color;
+    fragColor = v_Position;
 }
