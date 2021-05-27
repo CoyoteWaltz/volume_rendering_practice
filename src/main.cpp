@@ -1,5 +1,5 @@
 /**
- * new opengl toturial demo
+ * -d directory of multi-files --tff transfer function data -f single data file
 */
 #include "include/libs.h"
 #include <bitset>
@@ -13,8 +13,8 @@
 double lastTime = glfwGetTime();
 int frames = 0;
 
-int g_angle_horizontal = 213;
-int g_angle_vertical = -180;
+int g_angle_horizontal = 0; // y
+int g_angle_vertical = 90;  // x
 
 bool update_mvp = false;
 
@@ -220,8 +220,8 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // APPLE
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 开启 core profile
 
-    unsigned int width = 512;
-    unsigned int height = 512;
+    unsigned int width = 600;
+    unsigned int height = 600;
 
     // Actually create the window
     GLFWwindow *window = glfwCreateWindow(width, height, "volume rendering", NULL, NULL);
@@ -346,7 +346,8 @@ int main(int argc, char **argv)
 
         glm::mat4 mvp = getMVP(width, height);
         Shader face_shader(shaders_path + "face.shader");
-        Shader raycast_shader(shaders_path + "raycast.shader");
+        // Shader raycast_shader(shaders_path + "raycast_tff.shader");
+        Shader raycast_shader(shaders_path + "raycast_gray.shader");
         face_shader.bind();
 
         face_shader.set_unifroms_mat4f("u_MVP", mvp);

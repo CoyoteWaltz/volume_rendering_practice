@@ -48,70 +48,63 @@ void main()
 
     vec3 dir=exitPoint-v_EntryPoint;
 
-    vec3 dx = abs(dir);
+    // vec3 dx = abs(dir);
     // float eps = .00001f;
     // if (dx.x < eps || dx.y < eps || dx.z < eps) {
-    //     fragColor = vec4(1., 0., 0.,1.);
-    //     discard;
-    //     // return;
+        //     discard;
     // }
 
-    // fragColor = vec4(normalize(dir), 1.f);
-    // return;
     float len=length(dir);// the length from front to back is calculated and used to terminate the ray
     vec3 deltaDir=normalize(dir)*StepSize;
     float deltaDirLen=length(deltaDir);
     vec3 voxelCoord=v_EntryPoint;
-    // vec3 voxelCoord=vec3(v_EntryPoint.x / 2., v_EntryPoint.y, v_EntryPoint.z);
     vec4 colorAcum=vec4(0.);// The dest color
-    float alphaAcum=0.;// The dest alpha for blending
     /* 定义颜色查找的坐标 */
     float intensity;
     float forwardLen=0.;
     vec4 colorSample;// The src color
     float alphaSample;// The src alpha
     // backgroundColor
-    vec4 bgColor=vec4(1.,1.,1.,0.);
-    // vec4 bgColor=vec4(0.);
+    // vec4 bgColor=vec4(1.,1.,1.,0.);
+    vec4 bgColor=vec4(0.);
     
     for(int i=0;i<1600;i++)
     {
         // 获得体数据中的标量值scaler value
         intensity=texture(u_FaceTexture,voxelCoord).x;
         // 查找传输函数中映射后的值
-        // 依赖性纹理读取
-        colorSample=texture(u_TransferFunc,intensity);
-        // colorSample=vec4(intensity);
-        // if (intensity < 0.) {
-        //     colorAcum=vec4(1., 0, 0, 1.);
-        //     break;
-        // }
-        // modulate the value of colorSample.a
-        // front-to-back integration
-        if(colorSample.a>0.){
-            // accomodate for variable sampling rates (base interval defined by mod_compositing.frag)
-            float colorAcumOpacity = 1.-colorAcum.a;
-            // colorSample.a=1.-pow(1.-colorSample.a,deltaDirLen / StepSize);// 放大了好多的 alpha optical correction
-            colorSample.a=1.-pow(1.-colorSample.a,StepSize * 200.f);// 放大了好多的 alpha optical correction
-            colorAcum.rgb+=colorAcumOpacity * colorSample.rgb * colorSample.a;
-            colorAcum.a+=colorAcumOpacity * colorSample.a;
+        if (intensity > 0.1)
+        {
+            // modulate the value of colorSample.a
+            float enhancedIntensity = 1.0f - exp(-2. * intensity);
+            // colorSample=vec4(vec3(1.0f - exp(-intensity)), enhancedIntensity);
+            colorSample = vec4(enhancedIntensity);
+
+            // accomodate for variable sampling rates base interval defined by mod_compositing.frag
+            // front-to-back integration
+            float opacityAlpha = (1.-colorAcum.a) * colorSample.a;
+            colorAcum.rgb+=opacityAlpha * colorSample.rgb;
+            colorAcum.a+=opacityAlpha;
         }
-        voxelCoord+=deltaDir;
+
         forwardLen+=deltaDirLen;
         
         // terminate if opacity > 1 or the ray is outside the volume
-        if(forwardLen>=len){
-            colorAcum.rgb=colorAcum.rgb*colorAcum.a + (1-colorAcum.a)*bgColor.rgb;
-            // colorAcum = vec4(1.);
-
+        if(forwardLen>=len)
+        {
+            if (colorAcum.a > .5) 
+            {
+                colorAcum.rgb=colorAcum.rgb*colorAcum.a + (1-colorAcum.a)*bgColor.rgb;
+            }
             break;
         }
         if(colorAcum.a>.93)
         {
             colorAcum.a=1.;
-            // colorAcum = vec4(1.);
+            // colorAcum.rgb = vec3(1., 0., 0.);
             break;
         }
+        voxelCoord+=deltaDir;
     }
     fragColor=colorAcum;
     // fragColor = vec4(v_EntryPoint, 1.0);
