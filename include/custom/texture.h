@@ -2,7 +2,11 @@
 #define TEXTURE_H
 
 #include "utils.h"
+#include "tiffio.h"
+#include "tiffio.hxx"
 #include <string>
+#include <vector>
+#include <fstream>
 
 class Texture
 {
@@ -72,7 +76,7 @@ private:
     int depth;
 
 public:
-    Texture3D(const bool face = false);
+    Texture3D(const std::string& file_path);
     ~Texture3D();
 
     inline int get_width() const { return width; }

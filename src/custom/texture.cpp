@@ -1,13 +1,14 @@
 #include "custom/texture.h"
 #include "vendor/stb_image.h"
-#include "tiffio.h"
-#include "tiffio.hxx"
-#include <fstream>
 
 Texture1D::Texture1D(const std::string &file_path, const bool empty)
     : Texture(GL_TEXTURE_1D), local_buffer(nullptr), file_path(file_path),
       length(0)
 {
+    if (empty)
+    {
+        return;
+    }
     std::ifstream file(file_path, std::ifstream::in);
     if (!file)
     {
@@ -16,18 +17,8 @@ Texture1D::Texture1D(const std::string &file_path, const bool empty)
     }
 
     const int MAX_CNT = 10000;
-    // local_buffer = (unsigned char *)calloc(MAX_CNT, sizeof(unsigned char));
     local_buffer = new unsigned char[MAX_CNT];
     file.read(reinterpret_cast<char *>(local_buffer), MAX_CNT);
-    // for (size_t i = 0; i < MAX_CNT; i++)
-    // {
-    //     /* code */
-    //     int data = int(local_buffer[i]);
-    //     if (data != 0)
-    //     {
-    //         std::cout << "local_buffer " << data << std::endl;
-    //     }
-    // }
 
     if (file.eof())
     {
@@ -115,92 +106,159 @@ Texture2D::~Texture2D()
     GLCALL(glDeleteTextures(1, &renderer_id));
 }
 
-//////////////// Texture3D
-Texture3D::Texture3D(const bool face)
-    : Texture(GL_TEXTURE_3D), local_buffer(nullptr), file_path(file_path),
-      width(0), height(0)
+std::vector<std::string> read_dir_paths(const std::string &dir_path)
 {
-    // temp hardcode data
-    unsigned int w = 256;
-    unsigned int h = 256;
-    unsigned int d = 255;
-    if (face)
+    std::vector<std::string> paths;
+    for (const auto &entry : std::filesystem::directory_iterator(dir_path))
     {
+        paths.push_back(entry.path());
+    }
+    std::sort(paths.begin(), paths.end());
+    return paths;
+}
 
-        const char *filename = "../resource/textures/head256.raw";
-        FILE *fp;
-        size_t size = w * h * d;
-        local_buffer = new unsigned char[size]; // 8bit
-        if (!(fp = fopen(filename, "rb")))
+inline bool is_tiff(const std::string &file)
+{
+    return file.substr(file.size() - 4, file.size()).compare(".tif") == 0;
+}
+
+inline bool is_raw(const std::string &file)
+{
+    return file.substr(file.size() - 4, file.size()).compare(".raw") == 0;
+}
+
+void read_single_tiff(TIFF *tif, unsigned char *buffer, uint32_t width, uint32_t height, int current_depth)
+{
+    uint32_t pixels = width * height;
+    uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
+
+    uint32_t *scan_line = nullptr;
+    if (raster != NULL)
+    {
+        if (TIFFReadRGBAImage(tif, width, height, raster, 0))
         {
-            std::cout << "Error: opening .raw file failed" << std::endl;
-            exit(EXIT_FAILURE);
+            for (size_t i = 0; i < pixels; i++)
+            {
+                uint32_t value = raster[i];
+                int low = (unsigned char)(value);
+                buffer[current_depth * pixels + i] = low;
+            }
+        }
+        _TIFFfree(raster);
+    }
+}
+
+//////////////// Texture3D
+Texture3D::Texture3D(const std::string &file_path)
+    : Texture(GL_TEXTURE_3D), local_buffer(nullptr), file_path(file_path),
+      width(0), height(0), depth(0)
+{
+    std::cout << "loading volume file/directory [" << file_path << "]" << std::endl;
+    const auto &file_entry = std::filesystem::directory_entry(file_path);
+    // 是否是 dir
+    if (!file_entry.exists())
+    {
+        std::cout << "[Load volume failed!]: path not exist" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    if (file_entry.is_directory())
+    {
+        // 处理多个片
+        std::cout << "handle dir..." << std::endl;
+        const std::vector<std::string> files = read_dir_paths(file_path);
+        depth = files.size();
+        if (depth > 0)
+        {
+            const std::string &first = files[0];
+            if (is_tiff(first))
+            {
+                TIFF *tif = TIFFOpen(first.c_str(), "r");
+                if (!tif)
+                {
+                    std::cout << "open file failed! >>> " << first << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+                TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+                TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+                TIFFClose(tif);
+            }
         }
         else
         {
-            std::cout << "OK: open .raw file successed" << std::endl;
+            std::cout << "[Load volume failed!]: No files in " << file_path << std::endl;
+            exit(EXIT_FAILURE);
         }
-        size_t file_size = fread(local_buffer, sizeof(unsigned char), size, fp);
-        std::cout << "read file size ? " << file_size << std::endl;
-
-        fclose(fp);
+        uint32_t total = width * height * depth;
+        local_buffer = new unsigned char[total];
+        for (size_t i = 0; i < files.size(); ++i)
+        {
+            // 是否是 tiff 文件
+            const std::string &file = files[i];
+            if (is_tiff(file))
+            {
+                TIFF *tif = TIFFOpen(file.c_str(), "r");
+                if (!tif)
+                {
+                    std::cout << "[Load volume failed!]: Open file failed! >>> " << file << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+                read_single_tiff(tif, local_buffer, width, height, i);
+            }
+        }
     }
     else
     {
-        w = 512;
-        h = 512;
-        d = 512;
-
-        const char *filename = "../resource/textures/neuro.tif";
-        TIFF *tif = TIFFOpen(filename, "r");
-        if (!tif)
+        // 处理单文件
+        if (is_tiff(file_path))
         {
-            std::cout << "open file failed! >>> " << filename << std::endl;
+            TIFF *tif = TIFFOpen(file_path.c_str(), "r");
+            if (!tif)
+            {
+                std::cout << "[Load volume failed!]: Open file failed! >>> " << file_path << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+            TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+            depth = 0;
+            do
+            {
+                depth++;
+            } while (TIFFReadDirectory(tif)); // go next slice
+            TIFFClose(tif);
+            // 再次打开 读数据
+            tif = TIFFOpen(file_path.c_str(), "r");
+            uint32_t total = width * height * depth;
+            local_buffer = new unsigned char[total];
+            int dircount = 0;
+            do
+            {
+                read_single_tiff(tif, local_buffer, width, height, dircount);
+                dircount++;
+            } while (TIFFReadDirectory(tif)); // go next slice
+            TIFFClose(tif);
+        }
+        else if (is_raw(file_path))
+        {
+            width = 256;
+            height = 256;
+            depth = 256;
+            FILE *fp;
+            size_t size = width * height * depth;
+            local_buffer = new unsigned char[size]; // 8bit
+            if (!(fp = fopen(file_path.c_str(), "rb")))
+            {
+                std::cout << "[Load volume failed!]: Opening .raw file failed" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+
+            size_t file_size = fread(local_buffer, sizeof(unsigned char), size, fp);
+            fclose(fp);
+        }
+        else
+        {
+            std::cout << "[Load volume failed!]:other file format not supported..." << std::endl;
             exit(EXIT_FAILURE);
         }
-        uint32_t width, height;
-        uint32_t tileWidth, tileLength;
-        uint32_t x, y;
-        // uint32_t type;
-
-        TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
-        TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tileWidth);
-        TIFFGetField(tif, TIFFTAG_TILELENGTH, &tileLength);
-        // TIFFGetField(tif, TIFFTAG_DATATYPE, &type);
-        std::cout << "TIFFTAG_IMAGEWIDTH " << width
-                  << "TIFFTAG_IMAGELENGTH " << height
-                  << std::endl;
-        // std::cout << "type " << type << std::endl;
-
-        int dircount = 0;
-        uint32_t depth = 512;
-        uint32_t total = width * height * depth;
-        local_buffer = new unsigned char[total];
-        do
-        {
-            dircount++;
-            uint32_t pixels = width * height;
-            uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
-
-            uint32_t *scan_line = nullptr;
-            if (raster != NULL)
-            {
-                if (TIFFReadRGBAImage(tif, width, height, raster, 0))
-                {
-                    // std::cout << "read success " << dircount << std::endl;
-                    for (size_t i = 0; i < pixels; i++)
-                    {
-                        // std::cout << "data: " << i << " " << raster[i] << std::endl;
-                        uint32_t value = raster[i];
-                        int low = (unsigned char)(value);
-                        local_buffer[(dircount - 1) * pixels + i] = low;
-                    }
-                }
-                _TIFFfree(raster);
-            }
-        } while (TIFFReadDirectory(tif)); // go next slice
-        TIFFClose(tif);
     }
 
     GLCALL(glGenTextures(1, &renderer_id));
@@ -216,11 +274,12 @@ Texture3D::Texture3D(const bool face)
     // 3D 纹理的 internal format GL_INTENSITY => R = G = B = A 都是 I
     // GL_LUMINANCE => R = G = B, A = 1.0  不过这两个貌似都不能用??
     // Luminance is a greyscale image with alpha set to 1. Intensity is a greyscale image with alpha set to the greyscale value.
-    GLCALL(glTexImage3D(type, 0, GL_RGB8, w, h, d, 0, GL_RED, GL_UNSIGNED_BYTE, local_buffer));
-    // GLCALL(glTexImage3D(type, 0, GL_INTENSITY, w, h, d, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, local_buffer));
+    GLCALL(glTexImage3D(type, 0, GL_RGB8, width, height, depth, 0, GL_RED, GL_UNSIGNED_BYTE, local_buffer));
 
     delete[] local_buffer;
     local_buffer = nullptr;
+    std::cout << "loading volume file/directory [" << file_path << "] done." << std::endl;
+    std::cout << "At size of " << width << " * " << height << " * " << depth << std::endl;
 }
 
 Texture3D::~Texture3D()
