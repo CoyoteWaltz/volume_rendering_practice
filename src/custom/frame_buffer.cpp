@@ -17,7 +17,6 @@ FrameBuffer::FrameBuffer(const unsigned int width, const unsigned int height)
     GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width * scale, height * scale, 0,
                         GL_RGBA, GL_FLOAT, NULL));
 
-    std::cout << "Init aaa renderer!" << std::endl;
     GLCALL(glBindTexture(GL_TEXTURE_2D, 0));
     // GLCALL(glActiveTexture(GL_TEXTURE0 + 1)); // texture slot 最大 32 个
     // GLCALL(glBindTexture(GL_TEXTURE_2D, color_buffer_id));

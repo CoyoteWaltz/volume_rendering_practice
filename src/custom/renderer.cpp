@@ -2,7 +2,7 @@
 
 Renderer::Renderer()
 {
-    std::cout << "Init aaa renderer!" << std::endl;
+    std::cout << "Init a renderer!" << std::endl;
 }
 
 void Renderer::draw(const VertexArray &va, const IndexBuffer &ib, const Shader &shader,

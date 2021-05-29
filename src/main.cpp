@@ -3,7 +3,6 @@
 */
 #include "include/libs.h"
 #include <bitset>
-
 #include <string>
 
 #define X_axis 0
@@ -14,7 +13,8 @@ double lastTime = glfwGetTime();
 int frames = 0;
 
 int g_angle_horizontal = 0; // y
-int g_angle_vertical = 90;  // x
+int g_angle_vertical = 0;   // x
+float g_step_size = 0.005;  // 采样步长
 
 bool update_mvp = false;
 
@@ -44,7 +44,7 @@ void padding_viewport(const int width, const int height, const int padding);
 void window_resize_callback(GLFWwindow *window, const int width, const int height)
 {
     std::cout << "resizeing to " << width << "*" << height << std::endl;
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, width * 2, height * 2);
     // padding_viewport(width, height, 10);
 }
 
@@ -53,23 +53,20 @@ void padding_viewport(const int width, const int height, const int padding = 10)
     glViewport(padding, padding, width - padding, height - padding);
 }
 
-void handle_input(GLFWwindow *window)
+void handle_view_change(GLFWwindow *window)
 {
     int rotate_delta_deg = 3;
     update_mvp = true;
 
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
-    else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
         // hit space change color
         // glClearColor(1.f, 1.f, 1.f, 1.f);
-        std::cout << "归零!" << std::endl;
+        std::cout << "reset!" << std::endl;
         g_angle_horizontal = 0;
         g_angle_vertical = 0;
-        g_eye_pos = glm::vec3(0.0f, 0.0f, 2.0f); // z 2.0 init
+        g_eye_pos = glm::vec3(0.0f, 0.0f, 2.0f); // z 2.0 ini
+        g_step_size = 0.005f;
     }
     else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
     {
@@ -120,6 +117,37 @@ void handle_input(GLFWwindow *window)
     else
     {
         update_mvp = false;
+    }
+}
+
+void handle_input(GLFWwindow *window)
+{
+
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, true);
+    }
+    handle_view_change(window);
+
+    // sample adjustment
+    float delta_step = .0005f;
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+    {
+        g_step_size += delta_step;
+        if (g_step_size > 1.f)
+        {
+            g_step_size = .9f;
+        }
+        std::cout << "current sample step size: " << g_step_size << std::endl;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+    {
+        g_step_size -= delta_step;
+        if (g_step_size <= 0.f)
+        {
+            g_step_size = delta_step;
+        }
+        std::cout << "current sample step size: " << g_step_size << std::endl;
     }
 }
 
@@ -192,19 +220,21 @@ glm::mat4 getMVP(int width, int height)
 
 int main(int argc, char **argv)
 {
-    bool render_face = true;
+    // test_read_dir();
+    // return 1;
+    bool use_tff = false;
+    std::string volume_file("");
+    std::string transfer_function_file("");
     if (argc >= 2)
     {
-        // for (size_t i = 0; i < argc; i++)
-        // {
-        //     std::cout << "III---" << i << " > " << argv[i] << std::endl;
-        // }
-        std::string face_str(argv[1]);
-        if (face_str.compare("noface") == 0)
-        {
-            std::cout << "III---noface" << std::endl;
-            render_face = false;
-        }
+        // data path name
+        // -tff bool
+        volume_file = std::string(argv[1]);
+    }
+    if (argc >= 4)
+    {
+        use_tff = std::string(argv[2]).compare("-tff") == 0;
+        transfer_function_file = std::string(argv[3]);
     }
 
     // start GL context and O/S window using the GLFW helper library
@@ -261,24 +291,24 @@ int main(int argc, char **argv)
     // actually 这些 vertices 只有 position 属性
     // 如果有其他属性 那么在 attrib point 的时候就要 计算其他步长之类的计算
     // 如果要再传入一个 xyz 给 location 需要 double 一下数据...
-    // float vertices[24] = {
-    //     0.0, 0.0, 0.0,
-    //     0.0, 0.0, 1.0,
-    //     0.0, 1.0, 0.0,
-    //     0.0, 1.0, 1.0,
-    //     1.0, 0.0, 0.0,
-    //     1.0, 0.0, 1.0,
-    //     1.0, 1.0, 0.0,
-    //     1.0, 1.0, 1.0};
-    float vertices[48] = {
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-        0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
-        1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-        1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-        1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
-        1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+    float vertices[24] = {
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 1.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 1.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 1.0};
+    // float vertices[48] = {
+    //     0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    //     0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
+    //     0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
+    //     0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+    //     1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+    //     1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+    //     1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
+    //     1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
     // draw the six faces of the boundbox by drawwing triangles
     // draw it contra-clockwise
@@ -303,27 +333,6 @@ int main(int argc, char **argv)
         1, 0, 4,
         4, 5, 1};
 
-    float vertices2[] = {
-        //World					//Color
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.0f,  //v0
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,   //v1
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f,    //v2
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,   //v3
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, //v4
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f,  //v5
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1.0f,   //v6
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 1.0f,  //v7
-    };
-
-    unsigned int indices2[36] = {
-        0, 1, 2, 0, 2, 3, //front
-        4, 7, 6, 4, 6, 5, //back
-        4, 0, 3, 4, 3, 7, //left
-        1, 5, 6, 1, 6, 2, //right
-        3, 2, 6, 3, 6, 7, //top
-        4, 5, 1, 4, 1, 0, //bottom
-    };
-
     {
         // gl 如何 blend 获取 GL_SRC_ALPHA 在这之上的 alpha' = 1 - alpha
         // glBlendFunc: src -> dest 新的颜色 -> 目标的颜色 然后加在原始的颜色上
@@ -340,24 +349,25 @@ int main(int argc, char **argv)
         VertexArray va;
         VertexBufferLayout layout;
         layout.push<float>(3); // layout 3D xyz => 3
-        layout.push<float>(3); // layout 3D color => 3 the same to xyz
-        // layout.push<float>(2); // layout 3D texture coord => 2
+        // layout.push<float>(3); // layout 3D color => 3 the same to xyz
         va.add_buffer(vb, layout);
 
         glm::mat4 mvp = getMVP(width, height);
+
         Shader face_shader(shaders_path + "face.shader");
-        // Shader raycast_shader(shaders_path + "raycast_tff.shader");
-        Shader raycast_shader(shaders_path + "raycast_gray.shader");
+        std::string raycast_shader_file = shaders_path + "raycast_gray.shader";
+        if (use_tff)
+        {
+            raycast_shader_file = shaders_path + "raycast_tff.shader";
+        }
+        Shader raycast_shader(raycast_shader_file);
         face_shader.bind();
 
         face_shader.set_unifroms_mat4f("u_MVP", mvp);
         raycast_shader.bind();
         raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
-        // face_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
-
-        Texture1D transfer_function("../resource/textures/tff.dat");
-        // Texture2D bf_texture("../resource/textures/ttt.png", true);
-        Texture3D face_texture(render_face);
+        Texture1D transfer_function(transfer_function_file, !use_tff);
+        Texture3D face_texture(volume_file);
 
         // 需要在 loop 中 重新 bind
         // 画不同 obj 的时候 我们有必要每次都重新绑定参数 告诉 opengl
@@ -400,15 +410,19 @@ int main(int argc, char **argv)
             raycast_shader.bind();
             renderer.clear();
 
-            raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
+            // raycast_shader.set_unifroms2f("u_ScreenSize", float(width), float(height));
             raycast_shader.set_unifroms_mat4f("u_MVP", mvp);
+            raycast_shader.set_unifroms1f("u_StepSize", g_step_size);
 
             // set texture uniforms
-            transfer_function.bind(0);
+            if (use_tff)
+            {
+                transfer_function.bind(0);
+                raycast_shader.set_unifroms1i("u_TransferFunc", 0);
+            }
+
             frame.bind_color_buffer_to_texture(1);
-            // bf_texture.bind(1);
             face_texture.bind(2);
-            raycast_shader.set_unifroms1i("u_TransferFunc", 0);
             raycast_shader.set_unifroms1i("u_bfTexture", 1); // texture => slot 0
             raycast_shader.set_unifroms1i("u_FaceTexture", 2);
 

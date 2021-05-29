@@ -16,6 +16,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+
+#include <filesystem>
+#include <algorithm>
+
 // 处理 ASSERT
 #ifdef _MSC_VER
 // 只有 msc++ 有

@@ -2,7 +2,7 @@
 #version 410 core
 
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 color; // 其实这个 不要也可以 目前看完全用不到
+// layout(location = 1) in vec3 color; // 其实这个 不要也可以 目前看完全用不到
 
 out vec3 v_EntryPoint;
 // out vec4 ExitPointCoord;
@@ -11,7 +11,7 @@ uniform mat4 u_MVP;
 
 void main()
 {
-    v_EntryPoint = color;
+    v_EntryPoint = position;
     gl_Position = u_MVP * vec4(position, 1.0);
     // gl_Position = vec4(position, 1.0);
     // ExitPointCoord = gl_Position;
@@ -25,7 +25,9 @@ void main()
 
 layout(location = 0) out vec4 fragColor;
 
-uniform vec2 u_ScreenSize;
+// uniform vec2 u_ScreenSize;
+uniform float u_StepSize;
+
 
 uniform sampler1D u_TransferFunc;
 uniform sampler2D u_bfTexture;
@@ -35,7 +37,7 @@ uniform sampler3D u_FaceTexture;
 in vec3 v_EntryPoint;
 // in vec4 ExitPointCoord;
 
-#define StepSize .005
+// #define StepSize .005
 
 void main()
 {
@@ -57,7 +59,7 @@ void main()
     // }
 
     float len=length(dir);// the length from front to back is calculated and used to terminate the ray
-    vec3 deltaDir=normalize(dir)*StepSize;
+    vec3 deltaDir=normalize(dir)*u_StepSize;
     float deltaDirLen=length(deltaDir);
     vec3 voxelCoord=v_EntryPoint;
     // vec3 voxelCoord=vec3(v_EntryPoint.x / 2., v_EntryPoint.y, v_EntryPoint.z);
@@ -67,12 +69,12 @@ void main()
     float intensity;
     float forwardLen=0.;
     vec4 colorSample;// The src color
-    float alphaSample;// The src alpha
+    // float alphaSample;// The src alpha
     // backgroundColor
     vec4 bgColor=vec4(1.,1.,1.,0.);
     // vec4 bgColor=vec4(0.);
     
-    for(int i=0;i<1600;i++)
+    for(int i=0;i<16000;i++)
     {
         // 获得体数据中的标量值scaler value
         intensity=texture(u_FaceTexture,voxelCoord).x;
@@ -84,7 +86,7 @@ void main()
         // front-to-back integration
         if(colorSample.a>0.){
             // accomodate for variable sampling rates (base interval defined by mod_compositing.frag)
-            colorSample.a=1.-pow(1.-colorSample.a,StepSize * 200.f);// 放大了好多的 alpha optical correction
+            colorSample.a=1.-pow(1.-colorSample.a,u_StepSize * 200.f);// 放大了好多的 alpha optical correction
             float opacityAlpha = (1.-colorAcum.a) * colorSample.a;
             colorAcum.rgb+=colorSample.rgb * opacityAlpha;
             colorAcum.a+=opacityAlpha;
