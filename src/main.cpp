@@ -16,7 +16,8 @@ int g_angle_horizontal = 0; // y
 int g_angle_vertical = 0;   // x
 float g_step_size = 0.005;  // 采样步长
 
-bool update_mvp = false;
+bool g_update_mvp = false;
+bool g_auto_rotate = false;
 
 glm::vec3 g_eye_pos(0.0f, 0.0f, 2.0f); // z 2.0 init
 
@@ -56,7 +57,7 @@ void padding_viewport(const int width, const int height, const int padding = 10)
 void handle_view_change(GLFWwindow *window)
 {
     int rotate_delta_deg = 3;
-    update_mvp = true;
+    g_update_mvp = true;
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
@@ -116,7 +117,7 @@ void handle_view_change(GLFWwindow *window)
     }
     else
     {
-        update_mvp = false;
+        g_update_mvp = false;
     }
 }
 
@@ -148,6 +149,15 @@ void handle_input(GLFWwindow *window)
             g_step_size = delta_step;
         }
         std::cout << "current sample step size: " << g_step_size << std::endl;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        g_auto_rotate = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    {
+        g_auto_rotate = false;
     }
 }
 
@@ -220,15 +230,13 @@ glm::mat4 getMVP(int width, int height)
 
 int main(int argc, char **argv)
 {
-    // test_read_dir();
-    // return 1;
     bool use_tff = false;
     std::string volume_file("");
     std::string transfer_function_file("");
+    // data path name
+    // -tff bool
     if (argc >= 2)
     {
-        // data path name
-        // -tff bool
         volume_file = std::string(argv[1]);
     }
     if (argc >= 4)
@@ -270,13 +278,10 @@ int main(int argc, char **argv)
     // This is sometimes called vertical synchronization,
     // vertical retrace synchronization or just vsync.
     // 翻译一下
-    // glfwSwapInterval(1);
+    glfwSwapInterval(1);
 
     const std::string textures_path = "../resource/textures/";
     const std::string shaders_path = "../resource/shaders/";
-
-    // padding_viewport(width, height);
-    // glViewport(0, 0, width, height);
 
     // start GLEW extension handler
     glewExperimental = GL_TRUE;
@@ -300,15 +305,6 @@ int main(int argc, char **argv)
         1.0, 0.0, 1.0,
         1.0, 1.0, 0.0,
         1.0, 1.0, 1.0};
-    // float vertices[48] = {
-    //     0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    //     0.0, 0.0, 1.0, 0.0, 0.0, 1.0,
-    //     0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-    //     0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
-    //     1.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-    //     1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    //     1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
-    //     1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
     // draw the six faces of the boundbox by drawwing triangles
     // draw it contra-clockwise
@@ -349,7 +345,6 @@ int main(int argc, char **argv)
         VertexArray va;
         VertexBufferLayout layout;
         layout.push<float>(3); // layout 3D xyz => 3
-        // layout.push<float>(3); // layout 3D color => 3 the same to xyz
         va.add_buffer(vb, layout);
 
         glm::mat4 mvp = getMVP(width, height);
@@ -376,7 +371,6 @@ int main(int argc, char **argv)
         vb.unbind();
         face_shader.unbind();
         raycast_shader.unbind();
-        // glViewport(0, 0, width, height);
 
         Renderer renderer;
         FrameBuffer frame(width, height);
@@ -384,15 +378,14 @@ int main(int argc, char **argv)
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         while (!glfwWindowShouldClose(window))
         {
-            // glViewport(100, 0, width, height);
             glViewport(0, 0, width * 2, height * 2);
 
             handle_input(window);
-            if (update_mvp)
+            if (g_update_mvp || g_auto_rotate)
             {
                 std::cout << "new mvp" << std::endl;
                 mvp = getMVP(width, height);
-                update_mvp = false;
+                g_update_mvp = false;
             }
 
             /************************* draw back face to buffer */
@@ -432,6 +425,11 @@ int main(int argc, char **argv)
             face_texture.unbind();
 
             /************************* end drawing  */
+
+            if (g_auto_rotate)
+            {
+                horizontal_rotate();
+            }
 
             // window idle stuff
             glfwSwapBuffers(window);
