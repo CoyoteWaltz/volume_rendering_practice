@@ -1,48 +1,6 @@
 #include "custom/texture.h"
 #include "vendor/stb_image.h"
 
-std::vector<std::string> read_dir_paths(const std::string &dir_path)
-{
-    std::vector<std::string> paths;
-    for (const auto &entry : std::filesystem::directory_iterator(dir_path))
-    {
-        paths.push_back(entry.path());
-    }
-    std::sort(paths.begin(), paths.end());
-    return paths;
-}
-
-inline bool is_tiff(const std::string &file)
-{
-    return file.substr(file.size() - 4, file.size()).compare(".tif") == 0;
-}
-
-inline bool is_raw(const std::string &file)
-{
-    return file.substr(file.size() - 4, file.size()).compare(".raw") == 0;
-}
-
-void read_single_tiff(TIFF *tif, unsigned char *buffer, uint32_t width, uint32_t height, int current_depth)
-{
-    uint32_t pixels = width * height;
-    uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
-
-    uint32_t *scan_line = nullptr;
-    if (raster != NULL)
-    {
-        if (TIFFReadRGBAImage(tif, width, height, raster, 0))
-        {
-            for (size_t i = 0; i < pixels; i++)
-            {
-                uint32_t value = raster[i];
-                int low = (unsigned char)(value);
-                buffer[current_depth * pixels + i] = low;
-            }
-        }
-        _TIFFfree(raster);
-    }
-}
-
 Texture1D::Texture1D(const std::string &file_path, const bool empty)
     : Texture(GL_TEXTURE_1D), local_buffer(nullptr), file_path(file_path),
       length(0)
@@ -146,6 +104,48 @@ Texture2D::Texture2D(const std::string &file_path, const bool empty,
 Texture2D::~Texture2D()
 {
     GLCALL(glDeleteTextures(1, &renderer_id));
+}
+
+std::vector<std::string> read_dir_paths(const std::string &dir_path)
+{
+    std::vector<std::string> paths;
+    for (const auto &entry : std::filesystem::directory_iterator(dir_path))
+    {
+        paths.push_back(entry.path());
+    }
+    std::sort(paths.begin(), paths.end());
+    return paths;
+}
+
+inline bool is_tiff(const std::string &file)
+{
+    return file.substr(file.size() - 4, file.size()).compare(".tif") == 0;
+}
+
+inline bool is_raw(const std::string &file)
+{
+    return file.substr(file.size() - 4, file.size()).compare(".raw") == 0;
+}
+
+void read_single_tiff(TIFF *tif, unsigned char *buffer, uint32_t width, uint32_t height, int current_depth)
+{
+    uint32_t pixels = width * height;
+    uint32_t *raster = (uint32_t *)_TIFFmalloc(pixels * sizeof(uint32_t));
+
+    uint32_t *scan_line = nullptr;
+    if (raster != NULL)
+    {
+        if (TIFFReadRGBAImage(tif, width, height, raster, 0))
+        {
+            for (size_t i = 0; i < pixels; i++)
+            {
+                uint32_t value = raster[i];
+                int low = (unsigned char)(value);
+                buffer[current_depth * pixels + i] = low;
+            }
+        }
+        _TIFFfree(raster);
+    }
 }
 
 //////////////// Texture3D

@@ -2,10 +2,8 @@
 #version 410 core
 
 layout(location = 0) in vec3 position;
-// layout(location = 1) in vec3 color; // 其实这个 不要也可以 目前看完全用不到
 
 out vec3 v_EntryPoint;
-// out vec4 ExitPointCoord;
 
 uniform mat4 u_MVP;
 
@@ -13,31 +11,20 @@ void main()
 {
     v_EntryPoint = position;
     gl_Position = u_MVP * vec4(position, 1.0);
-    // gl_Position = vec4(position, 1.0);
-    // ExitPointCoord = gl_Position;
 }
-
-
-
 
 #shader fragment
 #version 410 core
 
 layout(location = 0) out vec4 fragColor;
 
-// uniform vec2 u_ScreenSize;
 uniform float u_StepSize;
-
 
 uniform sampler1D u_TransferFunc;
 uniform sampler2D u_bfTexture;
-// uniform sampler2D u_Texture;
 uniform sampler3D u_FaceTexture;
 
 in vec3 v_EntryPoint;
-// in vec4 ExitPointCoord;
-
-// #define StepSize .005
 
 void main()
 {
@@ -51,12 +38,6 @@ void main()
     vec3 dir=exitPoint-v_EntryPoint;
 
     vec3 dx = abs(dir);
-    // float eps = .00001f;
-    // if (dx.x < eps || dx.y < eps || dx.z < eps) {
-        //     fragColor = vec4(1., 0., 0.,1.);
-        //     discard;
-        //     // return;
-    // }
 
     float len=length(dir);// the length from front to back is calculated and used to terminate the ray
     vec3 deltaDir=normalize(dir)*u_StepSize;

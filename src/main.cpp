@@ -278,7 +278,7 @@ int main(int argc, char **argv)
     // This is sometimes called vertical synchronization,
     // vertical retrace synchronization or just vsync.
     // 翻译一下
-    glfwSwapInterval(1);
+    // glfwSwapInterval(1);
 
     const std::string textures_path = "../resource/textures/";
     const std::string shaders_path = "../resource/shaders/";
@@ -383,7 +383,6 @@ int main(int argc, char **argv)
             handle_input(window);
             if (g_update_mvp || g_auto_rotate)
             {
-                std::cout << "new mvp" << std::endl;
                 mvp = getMVP(width, height);
                 g_update_mvp = false;
             }
@@ -425,14 +424,14 @@ int main(int argc, char **argv)
             face_texture.unbind();
 
             /************************* end drawing  */
+            glfwSwapBuffers(window);
 
+            // window idle stuff
             if (g_auto_rotate)
             {
                 horizontal_rotate();
             }
 
-            // window idle stuff
-            glfwSwapBuffers(window);
             glfwPollEvents();
             show_fps(window);
         }
